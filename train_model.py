@@ -2,7 +2,7 @@
 # Fake News Detection System
 # Step 1 - Import Libraries
 # ==============================
-
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
@@ -80,3 +80,29 @@ print(news_df.head())
 
 print("\nLabel Counts:")
 print(news_df["label"].value_counts())
+# ==============================
+# Step 8 - Count Labels
+# ==============================
+
+print(news_df["label"].value_counts())
+# ==============================
+# Step 9 - Plot Label Distribution
+# ==============================
+
+news_df["label"].value_counts().plot(
+    kind="bar",
+    figsize=(6,4)
+)
+
+plt.title("Fake vs Real News")
+plt.xlabel("Label")
+plt.ylabel("Count")
+plt.xticks([0,1], ["Fake","Real"], rotation=0)
+
+plt.show()
+# ==============================
+# Step 10 - Dataset Information
+# ==============================
+
+print(news_df.info())
+print(news_df.describe(include="all"))
