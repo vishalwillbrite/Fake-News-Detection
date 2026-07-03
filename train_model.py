@@ -53,3 +53,30 @@ print(true_df.dtypes)
 
 print("\nMissing Values :")
 print(true_df.isnull().sum())
+# ==============================
+# Step 4 - Add Labels
+# ==============================
+
+fake_df["label"] = 0      # Fake News
+true_df["label"] = 1      # Real News
+# ==============================
+# Step 5 - Merge Datasets
+# ==============================
+
+news_df = pd.concat([fake_df, true_df], ignore_index=True)
+# ==============================
+# Step 6 - Shuffle Dataset
+# ==============================
+
+news_df = news_df.sample(frac=1, random_state=42).reset_index(drop=True)
+# ==============================
+# Step 7 - Combined Dataset Info
+# ==============================
+
+print("\nCombined Dataset Shape:", news_df.shape)
+
+print("\nFirst 5 Rows:")
+print(news_df.head())
+
+print("\nLabel Counts:")
+print(news_df["label"].value_counts())
