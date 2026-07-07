@@ -13,6 +13,7 @@ import nltk
 
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
+from sklearn.feature_extraction.text import TfidfVectorizer
 nltk.download("stopwords")
 stemmer = PorterStemmer()
 
@@ -142,3 +143,12 @@ def preprocess_text(text):
     return " ".join(cleaned_words)
     news_df["text"] = news_df["text"].apply(preprocess_text)
     print(news_df["text"].head())
+    # ==========================================
+# Step 12 - TF-IDF Vectorization
+# ==========================================
+
+vectorizer = TfidfVectorizer(max_features=5000)
+X = vectorizer.fit_transform(news_df["text"])
+print("Feature Matrix Shape:", X.shape)
+print("Target Shape:", y.shape)
+print(vectorizer.get_feature_names_out()[:20])
