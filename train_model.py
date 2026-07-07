@@ -148,15 +148,18 @@ def preprocess_text(text):
 
     # Join words back into a sentence
     return " ".join(cleaned_words)
-    news_df["text"] = news_df["text"].apply(preprocess_text)
-    print(news_df["text"].head())
+  
     # ==========================================
+news_df["text"] = news_df["text"].apply(preprocess_text)
+
+print(news_df["text"].head())
 # Step 12 - TF-IDF Vectorization
 # ==========================================
 
 vectorizer = TfidfVectorizer(max_features=5000)
 X = vectorizer.fit_transform(news_df["text"])
 print("Feature Matrix Shape:", X.shape)
+y = news_df["label"]
 print("Target Shape:", y.shape)
 print(vectorizer.get_feature_names_out()[:20])
 # ==========================================
@@ -188,6 +191,7 @@ accuracy = accuracy_score(y_test, y_pred)
 
 print("Accuracy:", accuracy)
 print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
 # ==========================================
 # Step 17 - Save Model
 # ==========================================
