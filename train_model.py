@@ -3,8 +3,8 @@
 # Phase 1 - Data Loading & Exploratory Analysis
 # ============================================
 
-
 # Import Libraries
+import joblib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -188,3 +188,17 @@ accuracy = accuracy_score(y_test, y_pred)
 
 print("Accuracy:", accuracy)
 print(confusion_matrix(y_test, y_pred))
+# ==========================================
+# Step 17 - Save Model
+# ==========================================
+
+joblib.dump(model, "models/fake_news_model.pkl")
+
+print("Model saved successfully!")
+# ==========================================
+# Step 18 - Save TF-IDF Vectorizer
+# ==========================================
+
+joblib.dump(vectorizer, "models/tfidf_vectorizer.pkl")
+
+print("Vectorizer saved successfully!")
