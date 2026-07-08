@@ -1,34 +1,21 @@
 body{
-
-    font-family: Arial, Helvetica, sans-serif;
-
+    font-family: Arial;
     background:#f4f4f4;
-
-    margin:0;
-
-    padding:0;
-
 }
 
 .container{
 
     width:70%;
-
-    margin:40px auto;
+    margin:auto;
+    margin-top:40px;
 
     background:white;
 
     padding:30px;
 
-    border-radius:12px;
+    border-radius:15px;
 
-    box-shadow:0px 0px 20px rgba(0,0,0,0.2);
-
-}
-
-h1{
-
-    text-align:center;
+    box-shadow:0 0 20px rgba(0,0,0,.2);
 
 }
 
@@ -36,11 +23,11 @@ textarea{
 
     width:100%;
 
-    padding:15px;
+    height:250px;
 
     font-size:16px;
 
-    border-radius:8px;
+    padding:15px;
 
 }
 
@@ -54,21 +41,7 @@ button{
 
     font-size:18px;
 
-    background:#007BFF;
-
-    color:white;
-
-    border:none;
-
-    border-radius:8px;
-
     cursor:pointer;
-
-}
-
-button:hover{
-
-    background:#0056b3;
 
 }
 

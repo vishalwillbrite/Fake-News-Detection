@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Fake News Detection</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -22,12 +19,13 @@
 
         <textarea
             name="news"
-            rows="12"
-            placeholder="Paste the news article here..."
+            placeholder="Paste your news article here..."
             required></textarea>
 
         <button type="submit">
+
             Check News
+
         </button>
 
     </form>
@@ -36,9 +34,9 @@
 
     <div class="result">
 
-        <h2>Prediction:</h2>
+        <h2>{{ prediction }}</h2>
 
-        <h1>{{ prediction }}</h1>
+        <h3>Confidence : {{ confidence }}%</h3>
 
     </div>
 

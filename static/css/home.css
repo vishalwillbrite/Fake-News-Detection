@@ -1,0 +1,199 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#f8fbff;
+    color:#222;
+}
+
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 80px;
+    background:white;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+}
+
+.logo{
+    font-size:28px;
+    font-weight:700;
+    color:#2563EB;
+}
+
+nav{
+    display:flex;
+    align-items:center;
+    gap:25px;
+}
+
+nav a{
+    text-decoration:none;
+    color:#333;
+    font-weight:500;
+}
+
+.start-btn{
+    background:#2563EB;
+    color:white;
+    padding:12px 22px;
+    border-radius:10px;
+}
+
+.hero{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:80px;
+
+}
+
+.left{
+
+    width:55%;
+
+}
+
+.left h1{
+
+    font-size:60px;
+
+    line-height:1.2;
+
+}
+
+.left span{
+
+    color:#2563EB;
+
+}
+
+.left p{
+
+    margin:30px 0;
+
+    color:#666;
+
+    font-size:20px;
+
+    line-height:1.8;
+
+}
+
+.hero-btn{
+
+    display:inline-block;
+
+    padding:15px 30px;
+
+    background:#2563EB;
+
+    color:white;
+
+    text-decoration:none;
+
+    border-radius:12px;
+
+    transition:.3s;
+
+}
+
+.hero-btn:hover{
+
+    transform:translateY(-3px);
+
+}
+
+.right{
+
+    font-size:220px;
+
+}
+
+.features{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:30px;
+
+    padding:70px;
+
+}
+
+.card{
+
+    width:300px;
+
+    background:white;
+
+    padding:35px;
+
+    border-radius:18px;
+
+    text-align:center;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-10px);
+
+}
+
+.card h2{
+
+    margin:15px 0;
+
+}
+
+.about{
+
+    padding:70px;
+
+    text-align:center;
+
+}
+
+.steps{
+
+    margin-top:50px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:40px;
+
+    font-size:22px;
+
+}
+
+footer{
+
+    margin-top:80px;
+
+    padding:30px;
+
+    text-align:center;
+
+    background:#2563EB;
+
+    color:white;
+
+}
