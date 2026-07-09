@@ -56,6 +56,12 @@ def predict():
         result_class=result_class,
         prediction_time=prediction_time
     )
+    if not news.strip():
+        return render_template(
+        "dashboard.html",
+        error="Please enter a news article."
+    )
+    
 
 
 # ---------------- RUN APP ----------------

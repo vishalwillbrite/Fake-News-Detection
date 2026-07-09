@@ -1,20 +1,82 @@
+/* --------------------------
+   General
+-------------------------- */
+
 body{
-
-    background:#eef4ff;
-
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#eef4ff,#dbeafe);
+    min-height:100vh;
 }
+
+/* --------------------------
+   Card
+-------------------------- */
 
 .card{
-
     border:none;
+    border-radius:20px;
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+/* --------------------------
+   Heading
+-------------------------- */
+
+h2{
+    color:#2563EB;
+    font-weight:700;
+}
+
+/* --------------------------
+   Result Icon
+-------------------------- */
+
+.icon{
+
+    width:100px;
+    height:100px;
+
+    margin:25px auto;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:48px;
 
 }
+
+.success{
+
+    background:#dcfce7;
+
+}
+
+.danger{
+
+    background:#fee2e2;
+
+}
+
+/* --------------------------
+   Progress
+-------------------------- */
 
 .progress{
 
-    height:30px;
+    height:28px;
 
-    border-radius:20px;
+    border-radius:30px;
+
+    overflow:hidden;
 
 }
 
@@ -22,46 +84,68 @@ body{
 
     font-size:15px;
 
-    font-weight:bold;
+    font-weight:600;
+
+    transition:width 1s ease-in-out;
 
 }
 
-.text-success{
+/* --------------------------
+   Info Cards
+-------------------------- */
 
-    font-size:42px;
+.row .col-md-4{
+
+    padding:15px;
+
+}
+
+.row h6{
+
+    color:#2563EB;
+
+    font-weight:600;
 
 }
 
-.text-danger{
+.row p{
 
-    font-size:42px;
+    color:#374151;
 
 }
+
+/* --------------------------
+   Buttons
+-------------------------- */
 
 .btn{
 
     border-radius:12px;
 
-}
-.card{
-    border-radius:20px;
-    transition:0.3s ease;
-}
-
-.card:hover{
-    transform:translateY(-5px);
-}
-
-.progress{
-    height:28px;
-    border-radius:20px;
-}
-
-.progress-bar{
-    font-weight:bold;
-    transition:width 1s ease-in-out;
-}
-
-.btn{
     min-width:170px;
+
+    transition:.3s;
+
+}
+
+.btn:hover{
+
+    transform:translateY(-2px);
+
+}
+
+/* --------------------------
+   Responsive
+-------------------------- */
+
+@media(max-width:768px){
+
+    .btn{
+
+        width:100%;
+
+        margin-top:10px;
+
+    }
+
 }

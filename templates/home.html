@@ -2,172 +2,164 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI News Verifier</title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/home.css') }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>AI News Verifier</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
 
 <body>
 
-<header>
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
 
-    <div class="logo">
+<div class="container">
 
-        📰 AI News Verifier
+<a class="navbar-brand fw-bold text-primary" href="/">
+📰 AI News Verifier
+</a>
 
-    </div>
+<div>
 
-    <nav>
+<a href="/" class="nav-link d-inline">Home</a>
 
-        <a href="/">Home</a>
-        <a href="#features">Features</a>
-        <a href="#about">About</a>
+<a href="/dashboard" class="btn btn-primary ms-3">
+Analyze
+</a>
 
-        <a href="/dashboard" class="start-btn">
+</div>
 
-            Get Started
+</div>
 
-        </a>
-
-    </nav>
-
-</header>
+</nav>
 
 <section class="hero">
 
-    <div class="left">
+<div class="container">
 
-        <h1>
+<div class="row align-items-center">
 
-            Detect Fake News using
-            <span>Artificial Intelligence</span>
+<div class="col-lg-6">
 
-        </h1>
+<h1>
 
-        <p>
+Detect Fake News
 
-            Verify the authenticity of news articles
-            using Machine Learning, NLP and
-            Logistic Regression.
+with Artificial Intelligence
 
-        </p>
+</h1>
 
-        <a href="/dashboard" class="hero-btn">
+<p>
 
-            Analyze News →
+Analyze news articles using Machine Learning,
+Natural Language Processing and TF-IDF.
 
-        </a>
+</p>
 
-    </div>
+<a href="/dashboard" class="btn btn-primary btn-lg">
 
-    <div class="right">
+🚀 Analyze Now
 
-        🤖
+</a>
 
-    </div>
+</div>
 
-</section>
+<div class="col-lg-6 text-center">
 
-<section id="features" class="features">
+<div class="hero-card">
 
-    <div class="card">
+🤖
 
-        ⚡
+<h3>AI Powered</h3>
 
-        <h2>Fast</h2>
+<p>
 
-        <p>
+Fast • Accurate • Reliable
 
-            Instant AI powered prediction.
+</p>
 
-        </p>
+</div>
 
-    </div>
+</div>
 
-    <div class="card">
+</div>
 
-        🧠
-
-        <h2>Machine Learning</h2>
-
-        <p>
-
-            Logistic Regression + TF-IDF
-
-        </p>
-
-    </div>
-
-    <div class="card">
-
-        🔒
-
-        <h2>Reliable</h2>
-
-        <p>
-
-            NLP based news verification.
-
-        </p>
-
-    </div>
+</div>
 
 </section>
 
-<section id="about" class="about">
+<section class="container py-5">
 
-    <h2>
+<div class="row text-center">
 
-        How It Works
+<div class="col-md-4">
 
-    </h2>
+<div class="feature">
 
-    <div class="steps">
+⚡
 
-        <div>
+<h4>Fast</h4>
 
-            📄
+<p>
 
-            <h3>Paste News</h3>
+Instant Prediction
 
-        </div>
+</p>
 
-        ➜
+</div>
 
-        <div>
+</div>
 
-            🤖
+<div class="col-md-4">
 
-            <h3>AI Analysis</h3>
+<div class="feature">
 
-        </div>
+🧠
 
-        ➜
+<h4>Machine Learning</h4>
 
-        <div>
+<p>
 
-            ✅
+Logistic Regression
 
-            <h3>Prediction</h3>
+</p>
 
-        </div>
+</div>
 
-    </div>
+</div>
+
+<div class="col-md-4">
+
+<div class="feature">
+
+🔒
+
+<h4>Reliable</h4>
+
+<p>
+
+Built using NLP
+
+</p>
+
+</div>
+
+</div>
+
+</div>
 
 </section>
 
 <footer>
 
-    © 2026 Vishaal • Fake News Detection AI
+Built with ❤️ using Flask + Machine Learning
 
 </footer>
 
