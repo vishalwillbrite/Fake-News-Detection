@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request
 import joblib
+import time
 from preprocessing import preprocess_text
 
-# Create Flask app
 app = Flask(__name__)
 
 # Load trained model and vectorizer
@@ -32,19 +32,29 @@ def predict():
 
     news_vector = vectorizer.transform([cleaned_news])
 
+    start_time = time.time()
+
     prediction = model.predict(news_vector)[0]
 
-    confidence = model.predict_proba(news_vector).max() * 100
+    probability = model.predict_proba(news_vector)
+
+    confidence = round(max(probability[0]) * 100, 2)
+
+    prediction_time = round(time.time() - start_time, 4)
 
     if prediction == 0:
         result = "❌ Fake News"
+        result_class = "fake"
     else:
         result = "✅ Real News"
+        result_class = "real"
 
     return render_template(
         "result.html",
         prediction=result,
-        confidence=f"{confidence:.2f}"
+        confidence=confidence,
+        result_class=result_class,
+        prediction_time=prediction_time
     )
 
 
