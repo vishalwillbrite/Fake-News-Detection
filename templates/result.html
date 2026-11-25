@@ -1,114 +1,160 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
+{% block title %}Forensic Analysis Result &mdash; VERITAS AI{% endblock %}
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Prediction Result</title>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
-
-</head>
-
-<body>
-
+{% block content %}
 <div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <!-- Main Forensic Result Card -->
+            <div class="glass-panel p-4 p-md-5 result-panel {{ 'real-verdict' if result_class == 'real' else 'fake-verdict' }}" style="display:block; margin-top:0;">
+                <!-- Header with Icon & Verdict Title -->
+                <div class="verdict-header">
+                    <div class="verdict-badge-box">
+                        <div class="verdict-icon">
+                            {% if result_class == 'real' %}
+                                <i class="bi bi-shield-check"></i>
+                            {% else %}
+                                <i class="bi bi-shield-x"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span class="badge {{ 'bg-success-subtle text-emerald' if result_class == 'real' else 'bg-danger-subtle text-crimson' }} px-3 py-1 rounded-pill small mb-2">
+                                FORENSIC AUDIT COMPLETED
+                            </span>
+                            <h2 class="verdict-name mb-1">
+                                {% if result_class == 'real' %}
+                                    VERIFIED REAL NEWS
+                                {% else %}
+                                    DECEPTIVE / FAKE NEWS
+                                {% endif %}
+                            </h2>
+                            <p class="verdict-desc">
+                                {{ verdict_summary }}
+                            </p>
+                        </div>
+                    </div>
 
-    <div class="card shadow-lg p-5 text-center">
+                    <!-- Circular Confidence Dial -->
+                    <div class="circular-meter-box">
+                        <svg class="circular-meter-svg" width="130" height="130">
+                            <circle class="meter-bg-circle" cx="65" cy="65" r="54"></circle>
+                            <circle class="meter-fill-circle" cx="65" cy="65" r="54"
+                                style="stroke-dasharray: 339.292; stroke-dashoffset: calc(339.292 - ({{ confidence }} / 100 * 339.292));">
+                            </circle>
+                        </svg>
+                        <div class="meter-center-text">
+                            <div class="meter-percent-val">{{ confidence }}%</div>
+                            <div class="meter-percent-sub">Confidence</div>
+                        </div>
+                    </div>
+                </div>
 
-        <h2>📰 Analysis Complete</h2>
+                <!-- Probability Distribution Bar -->
+                <div class="probability-bar-wrapper">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span class="text-emerald fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Real News Probability: {{ real_prob }}%</span>
+                        <span class="text-crimson fw-bold">Fake News Probability: {{ fake_prob }}% <i class="bi bi-x-circle-fill ms-1"></i></span>
+                    </div>
+                    <div class="split-bar">
+                        <div class="split-real" style="width: {{ real_prob }}%;"></div>
+                        <div class="split-fake" style="width: {{ fake_prob }}%;"></div>
+                    </div>
+                </div>
 
-        {% if result_class == "real" %}
+                <!-- Telemetry Grid -->
+                <div class="row g-3 my-4">
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                            <div class="text-muted small">Inference Latency</div>
+                            <div class="fs-5 fw-bold text-cyan mt-1">{{ prediction_time }}s</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                            <div class="text-muted small">Input Word Count</div>
+                            <div class="fs-5 fw-bold text-white mt-1">{{ word_count }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                            <div class="text-muted small">Stemmed Tokens</div>
+                            <div class="fs-5 fw-bold text-indigo mt-1">{{ cleaned_word_count }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                            <div class="text-muted small">Feature Space</div>
+                            <div class="fs-5 fw-bold text-warning mt-1">5,000 N-Grams</div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="icon success">✅</div>
+                <!-- Extracted Key Words / Features -->
+                {% if keywords %}
+                <div class="mb-4">
+                    <div class="small text-muted fw-bold mb-2">
+                        <i class="bi bi-tags text-cyan me-1"></i> Top TF-IDF Discriminating Vocabulary Roots:
+                    </div>
+                    <div class="keyword-tags">
+                        {% for kw in keywords %}
+                            <span class="keyword-tag">
+                                <span>#{{ kw.word }}</span>
+                                <span class="tag-weight">{{ kw.weight }}</span>
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
-            <h1 class="text-success">
-                REAL NEWS
-            </h1>
+                <!-- Article Excerpt -->
+                {% if news_snippet %}
+                <div class="p-3 rounded-3 mb-4" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass);">
+                    <div class="small text-muted mb-2"><i class="bi bi-file-text me-1 text-cyan"></i> Analyzed Article Preview:</div>
+                    <p class="small text-light mb-0 font-monospace" style="opacity: 0.85; line-height: 1.6;">
+                        "{{ news_snippet }}"
+                    </p>
+                </div>
+                {% endif %}
 
-        {% else %}
-
-            <div class="icon danger">❌</div>
-
-            <h1 class="text-danger">
-                FAKE NEWS
-            </h1>
-
-        {% endif %}
-
-        <h5 class="mt-4">
-            Confidence
-        </h5>
-
-        <div class="progress mt-3">
-
-            <div
-                class="progress-bar bg-primary"
-                style="width: {{ confidence }}%;">
-
-                {{ confidence }}%
-
+                <!-- Action Button Group -->
+                <div class="d-flex flex-wrap gap-3 pt-3 border-top border-secondary-subtle align-items-center">
+                    <a href="{{ url_for('dashboard') }}" class="btn-cyber-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i> Analyze Another Article
+                    </a>
+                    <button type="button" class="btn-cyber-outline" onclick="copyResultReport()">
+                        <i class="bi bi-clipboard-check me-1"></i> Copy Audit Report
+                    </button>
+                    <a href="{{ url_for('home') }}" class="btn-cyber-outline ms-auto">
+                        <i class="bi bi-house me-1"></i> Home
+                    </a>
+                </div>
             </div>
-
         </div>
-
-        <div class="row mt-5">
-
-            <div class="col-md-4">
-
-                <h6>🤖 Model</h6>
-
-                <p>Logistic Regression</p>
-
-            </div>
-
-            <div class="col-md-4">
-
-                <h6>🧠 NLP</h6>
-
-                <p>TF-IDF</p>
-
-            </div>
-
-            <div class="col-md-4">
-
-                <h6>⚡ Time</h6>
-
-                <p>{{ prediction_time }} sec</p>
-
-            </div>
-
-        </div>
-
-        <div class="mt-5">
-
-            <a href="/dashboard" class="btn btn-primary me-2">
-
-                Analyze Again
-
-            </a>
-
-            <a href="/" class="btn btn-outline-secondary">
-
-                Home
-
-            </a>
-
-        </div>
-
     </div>
-
 </div>
+{% endblock %}
 
-</body>
+{% block extra_js %}
+<script>
+function copyResultReport() {
+    const report = 
+`=========================================================
+VERITAS AI - NEWS CREDIBILITY FORENSIC REPORT
+=========================================================
+Verdict: {{ label }} ({{ confidence }}% Confidence)
+Real Probability : {{ real_prob }}%
+Fake Probability : {{ fake_prob }}%
+Inference Time   : {{ prediction_time }}s
+Word Count       : {{ word_count }} (Stemmed: {{ cleaned_word_count }})
+Architecture     : Logistic Regression + TF-IDF (5,000 Dimensions)
+=========================================================`;
 
-</html>
+    navigator.clipboard.writeText(report).then(() => {
+        alert("Forensic audit report copied to clipboard!");
+    }).catch(() => {
+        alert("Could not copy report to clipboard.");
+    });
+}
+</script>
+{% endblock %}

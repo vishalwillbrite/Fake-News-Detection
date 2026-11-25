@@ -1,146 +1,255 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}Analyzer Console &mdash; VERITAS AI{% endblock %}
 
-    <title>AI News Analyzer</title>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-</head>
-
-<body>
-
-<div class="container py-5">
-
+{% block content %}
+<div class="container analyzer-container">
     <div class="row g-4">
-
-        <!-- Left Side -->
+        <!-- Main Console Column (Left) -->
         <div class="col-lg-8">
+            <div class="glass-panel analyzer-console">
+                <!-- Console Header & Interactive Toolbar -->
+                <div class="console-header">
+                    <div>
+                        <h3 class="text-white mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-terminal-split text-cyan"></i>
+                            <span>AI News Credibility Sentinel</span>
+                        </h3>
+                        <p class="text-muted small mb-0">
+                            Paste text below for multi-stage NLP morphological inspection and probabilistic classification.
+                        </p>
+                    </div>
 
-            <div class="card shadow-lg p-4">
+                    <!-- Toolbar Group with Quick Samples -->
+                    <div class="toolbar-group">
+                        <button type="button" class="toolbar-btn btn-sample" onclick="loadSample('real')" title="Load Verified Real News Sample">
+                            <i class="bi bi-shield-check text-emerald"></i> Real Sample
+                        </button>
+                        <button type="button" class="toolbar-btn btn-sample" onclick="loadSample('fake')" title="Load Viral Conspiracy Fake Sample">
+                            <i class="bi bi-shield-x text-crimson"></i> Fake Sample
+                        </button>
+                        <button type="button" class="toolbar-btn btn-sample" onclick="loadSample('tech')" title="Load Tech Scientific Sample">
+                            <i class="bi bi-cpu text-cyan"></i> Tech Sample
+                        </button>
+                        <button type="button" class="toolbar-btn" onclick="pasteFromClipboard()" title="Paste from Clipboard">
+                            <i class="bi bi-clipboard"></i> Paste
+                        </button>
+                        <button type="button" class="toolbar-btn" onclick="clearNewsText()" title="Clear Text">
+                            <i class="bi bi-trash3"></i> Clear
+                        </button>
+                    </div>
+                </div>
 
-                <h2 class="mb-2">
-                    📰 AI News Analyzer
-                </h2>
-
-                <p class="text-muted">
-                    Paste a news article below and let AI verify whether it is Real or Fake.
-                </p>
-
+                <!-- Error Alert if passed from Flask -->
                 {% if error %}
-                <div class="alert alert-danger">
-                    {{ error }}
+                <div class="alert alert-danger glass-panel text-white border-0 py-3 mb-4 d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-exclamation-octagon-fill text-crimson fs-5"></i>
+                    <span>{{ error }}</span>
                 </div>
                 {% endif %}
 
-                <form id="newsForm" action="/predict" method="POST">
+                <!-- Analysis Form -->
+                <form id="newsAnalyzerForm" action="{{ url_for('predict') }}" method="POST">
+                    <div class="textarea-wrapper">
+                        <!-- Laser Scanning Beam -->
+                        <div class="scanner-laser"></div>
 
-                    <textarea
-                        id="news"
-                        name="news"
-                        class="form-control"
-                        rows="12"
-                        placeholder="Paste your news article here..."
-                        required></textarea>
-
-                    <div class="d-flex justify-content-between mt-2">
-
-                        <small id="count">0 Characters</small>
-
-                        <small id="words">0 Words</small>
-
+                        <textarea
+                            id="newsTextarea"
+                            name="news"
+                            class="cyber-textarea"
+                            placeholder="Paste your news article, social media headline, or press release here for real-time lexical inspection..."
+                            required></textarea>
                     </div>
 
-                    <div class="d-flex gap-2 mt-4">
-
-                        <button
-                            type="button"
-                            class="btn btn-outline-secondary"
-                            onclick="sampleNews()">
-                            Sample
-                        </button>
-
-                        <button
-                            type="button"
-                            class="btn btn-outline-danger"
-                            onclick="clearText()">
-                            Clear
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn btn-primary ms-auto">
-                            Analyze News
-                        </button>
-
+                    <!-- Live Counter & Reading Time Meta Bar -->
+                    <div class="textarea-meta">
+                        <div class="meta-stats">
+                            <span id="charCountBadge" class="meta-badge">0 Chars</span>
+                            <span id="wordCountBadge" class="meta-badge">0 Words</span>
+                            <span id="readTimeBadge" class="meta-badge">0 min read</span>
+                        </div>
+                        <span class="small text-muted d-none d-sm-inline">
+                            <i class="bi bi-shield-lock text-cyan me-1"></i> NLP 5K Dimensional Vectorizer
+                        </span>
                     </div>
 
+                    <!-- Submit Button -->
+                    <button id="analyzeSubmitBtn" type="submit" class="btn-cyber-primary w-100 justify-content-center py-3 fs-6">
+                        <i class="bi bi-cpu me-2"></i> Analyze News Article
+                    </button>
                 </form>
 
-                <div id="loading" class="text-center mt-4" style="display:none;">
-
-                    <div class="spinner-border text-primary"></div>
-
-                    <p class="mt-3">
-                        AI is analyzing the article...
+                <!-- High-Tech Scanner HUD Step Indicator (Visible during analysis) -->
+                <div id="scannerHud" class="scanner-hud">
+                    <div class="d-flex align-items-center justify-content-center gap-2 text-cyan mb-2">
+                        <span class="spinner-grow spinner-grow-sm" role="status"></span>
+                        <strong class="font-monospace text-uppercase small">Neural Scanner Active</strong>
+                    </div>
+                    <div class="hud-progress-bar">
+                        <div id="hudProgressFill" class="hud-progress-fill"></div>
+                    </div>
+                    <p id="hudStepText" class="hud-step-text">
+                        [01/05] Ingesting text stream &amp; tokenizing syntax...
                     </p>
-
                 </div>
 
-            </div>
+                <!-- Dynamic Live Result Panel (Rendered dynamically with motions) -->
+                <div id="resultPanel" class="result-panel">
+                    <div class="verdict-header">
+                        <div class="verdict-badge-box">
+                            <div id="resVerdictIcon" class="verdict-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div>
+                                <h3 id="resVerdictName" class="verdict-name">VERIFIED REAL NEWS</h3>
+                                <p id="resVerdictDesc" class="verdict-desc">Linguistic markers closely align with verified journalistic standards.</p>
+                            </div>
+                        </div>
 
+                        <!-- Circular Confidence Dial -->
+                        <div class="circular-meter-box">
+                            <svg class="circular-meter-svg" width="120" height="120">
+                                <circle class="meter-bg-circle" cx="60" cy="60" r="54"></circle>
+                                <circle id="resMeterCircle" class="meter-fill-circle" cx="60" cy="60" r="54"></circle>
+                            </svg>
+                            <div class="meter-center-text">
+                                <div id="resMeterPercent" class="meter-percent-val">0%</div>
+                                <div class="meter-percent-sub">Confidence</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Split Probability Comparison Bar -->
+                    <div class="probability-bar-wrapper">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span class="text-emerald fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Real Likelihood</span>
+                            <span class="text-crimson fw-bold">Fake Likelihood <i class="bi bi-x-circle-fill ms-1"></i></span>
+                        </div>
+                        <div class="split-bar">
+                            <div id="resSplitReal" class="split-real" style="width: 50%;"></div>
+                            <div id="resSplitFake" class="split-fake" style="width: 50%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small text-white fw-bold">
+                            <span id="resTextRealProb">50% Real</span>
+                            <span id="resTextFakeProb">50% Fake</span>
+                        </div>
+                    </div>
+
+                    <!-- Model Telemetry Metrics Row -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-4">
+                            <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                                <div class="text-muted small">Inference Latency</div>
+                                <div id="resLatency" class="fs-5 fw-bold text-cyan mt-1">0.02s</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                                <div class="text-muted small">Word Count</div>
+                                <div id="resWords" class="fs-5 fw-bold text-white mt-1">0</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                                <div class="text-muted small">Stemmed Roots</div>
+                                <div id="resStemmed" class="fs-5 fw-bold text-indigo mt-1">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notable Vocabulary Keywords -->
+                    <div class="mb-4">
+                        <div class="small text-muted fw-bold mb-2">
+                            <i class="bi bi-tags text-cyan me-1"></i> Influential TF-IDF Lexical Roots Detected:
+                        </div>
+                        <div id="resKeywords" class="keyword-tags">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap gap-2 pt-2 border-top border-secondary-subtle">
+                        <button type="button" class="btn-cyber-primary btn-pill-sm" onclick="copyForensicReport()">
+                            <i class="bi bi-clipboard-check me-1"></i> Copy Forensic Report
+                        </button>
+                        <button type="button" class="btn-cyber-outline btn-pill-sm ms-auto" onclick="clearNewsText()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Reset Console
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Right Side -->
-
+        <!-- Sidebar Telemetry & Guide Column (Right) -->
         <div class="col-lg-4">
+            <div class="d-flex flex-column gap-4">
+                <!-- System Specs Telemetry Card -->
+                <div class="glass-panel telemetry-card">
+                    <div class="telemetry-header">
+                        <div class="telemetry-icon">
+                            <i class="bi bi-sliders2"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-white mb-0">Model Telemetry</h5>
+                            <span class="text-muted small">Operational parameters</span>
+                        </div>
+                    </div>
 
-            <div class="card shadow-lg p-4 stats-card">
-
-                <h4 class="mb-3">
-                    📊 Statistics
-                </h4>
-
-                <hr>
-
-                <div class="mb-3">
-                    <strong>Accuracy</strong>
-                    <p>98%</p>
+                    <ul class="spec-list">
+                        <li class="spec-item">
+                            <span class="spec-title">Classifier Model</span>
+                            <span class="spec-value text-cyan">Logistic Regression</span>
+                        </li>
+                        <li class="spec-item">
+                            <span class="spec-title">Feature Space</span>
+                            <span class="spec-value">5,000 N-Grams</span>
+                        </li>
+                        <li class="spec-item">
+                            <span class="spec-title">Vectorization</span>
+                            <span class="spec-value">TF-IDF Matrix</span>
+                        </li>
+                        <li class="spec-item">
+                            <span class="spec-title">Stemming Engine</span>
+                            <span class="spec-value">Porter Stemmer</span>
+                        </li>
+                        <li class="spec-item">
+                            <span class="spec-title">Trained Corpus</span>
+                            <span class="spec-value">44,898 Articles</span>
+                        </li>
+                        <li class="spec-item">
+                            <span class="spec-title">Model Accuracy</span>
+                            <span class="spec-value text-emerald">98.7%</span>
+                        </li>
+                        <li class="spec-item">
+                            <span class="spec-title">System Status</span>
+                            <span class="badge bg-success-subtle text-success small">Online &bull; Live</span>
+                        </li>
+                    </ul>
                 </div>
 
-                <div class="mb-3">
-                    <strong>Model</strong>
-                    <p>Logistic Regression</p>
+                <!-- Analysis Best Practices Card -->
+                <div class="glass-panel p-4">
+                    <h6 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-lightbulb text-warning"></i> Verification Guidelines
+                    </h6>
+                    <ul class="list-unstyled small text-muted d-flex flex-column gap-3 mb-0">
+                        <li class="d-flex gap-2">
+                            <i class="bi bi-check2 text-cyan fs-6"></i>
+                            <span>Paste entire articles or at least 2&ndash;3 paragraphs to ensure sufficient TF-IDF feature density.</span>
+                        </li>
+                        <li class="d-flex gap-2">
+                            <i class="bi bi-check2 text-cyan fs-6"></i>
+                            <span>Authentic reporting emphasizes attributable source quotes, neutral tone, and date markers.</span>
+                        </li>
+                        <li class="d-flex gap-2">
+                            <i class="bi bi-check2 text-cyan fs-6"></i>
+                            <span>Deceptive articles frequently rely on sensationalism, urgent capitalization, and extreme adjectives.</span>
+                        </li>
+                    </ul>
                 </div>
-
-                <div class="mb-3">
-                    <strong>Technique</strong>
-                    <p>TF-IDF</p>
-                </div>
-
-                <div>
-                    <strong>Dataset</strong>
-                    <p>44,898 Articles</p>
-                </div>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
-
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
-
-</body>
-</html>
+{% endblock %}
