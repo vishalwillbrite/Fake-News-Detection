@@ -1480,3 +1480,140 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
 }
 
+/* ==========================================================================
+   EXTERNAL NEWS VERIFICATION SECTION (GDELT + LOCAL NLI)
+   ========================================================================== */
+.ext-verification-section {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-glass);
+    animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ext-progress-card,
+.ext-final-banner,
+.ext-claim-card,
+.ext-source-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: var(--transition-smooth);
+}
+
+.ext-final-banner.final-real {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(9, 13, 24, 0.85));
+    border-color: rgba(16, 185, 129, 0.38);
+}
+
+.ext-final-banner.final-fake {
+    background: linear-gradient(145deg, rgba(244, 63, 94, 0.1), rgba(9, 13, 24, 0.85));
+    border-color: rgba(244, 63, 94, 0.38);
+}
+
+.ext-final-banner.final-mixed {
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.1), rgba(9, 13, 24, 0.85));
+    border-color: rgba(245, 158, 11, 0.42);
+}
+
+.ext-final-banner.final-unverified {
+    background: linear-gradient(145deg, rgba(100, 116, 139, 0.14), rgba(9, 13, 24, 0.85));
+    border-color: rgba(148, 163, 184, 0.32);
+}
+
+.ext-final-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.final-real .ext-final-title { color: var(--real-emerald); }
+.final-fake .ext-final-title { color: var(--fake-crimson); }
+.final-mixed .ext-final-title { color: #fbbf24; }
+.final-unverified .ext-final-title { color: #cbd5e1; }
+
+.ext-disagreement-alert {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fde68a;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+}
+
+.ext-compare-pill {
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+}
+
+.ext-claim-card:hover,
+.ext-source-card:hover {
+    border-color: rgba(6, 182, 212, 0.35);
+    transform: translateY(-2px);
+}
+
+.ext-evidence-item {
+    background: rgba(0, 0, 0, 0.22);
+    border-left: 3px solid transparent;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.ext-evidence-item.ev-supporting { border-left-color: var(--real-emerald); }
+.ext-evidence-item.ev-contradicting { border-left-color: var(--fake-crimson); }
+
+.ext-source-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ext-source-passage {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-glass);
+    line-height: 1.55;
+}
+
+[data-theme="light"] .ext-progress-card,
+[data-theme="light"] .ext-final-banner,
+[data-theme="light"] .ext-claim-card,
+[data-theme="light"] .ext-source-card {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(15, 23, 42, 0.1);
+}
+
+[data-theme="light"] .ext-final-banner.final-real {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.08), rgba(255, 255, 255, 0.96));
+}
+
+[data-theme="light"] .ext-final-banner.final-fake {
+    background: linear-gradient(145deg, rgba(244, 63, 94, 0.08), rgba(255, 255, 255, 0.96));
+}
+
+[data-theme="light"] .ext-final-banner.final-mixed {
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.08), rgba(255, 255, 255, 0.96));
+}
+
+[data-theme="light"] .final-mixed .ext-final-title { color: #d97706; }
+[data-theme="light"] .final-unverified .ext-final-title { color: #475569; }
+
+[data-theme="light"] .ext-disagreement-alert {
+    background: rgba(245, 158, 11, 0.12);
+    color: #92400e;
+}
+
+[data-theme="light"] .ext-compare-pill,
+[data-theme="light"] .ext-evidence-item,
+[data-theme="light"] .ext-source-passage {
+    background: rgba(15, 23, 42, 0.03);
+    border-color: rgba(15, 23, 42, 0.08);
+}
+

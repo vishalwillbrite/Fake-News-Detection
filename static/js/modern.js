@@ -220,9 +220,19 @@ window.clearNewsText = function() {
     textarea.dispatchEvent(new Event("input"));
     textarea.focus();
 
+    if (activeVerifyPollTimer) {
+        clearTimeout(activeVerifyPollTimer);
+        activeVerifyPollTimer = null;
+    }
+
     const resultPanel = document.getElementById("resultPanel");
     if (resultPanel) {
         resultPanel.style.display = "none";
+    }
+
+    const extSection = document.getElementById("externalVerificationSection");
+    if (extSection) {
+        extSection.style.display = "none";
     }
 
     showToast("Cleared text input");
@@ -251,6 +261,26 @@ window.pasteFromClipboard = async function() {
    6. AI HUD Scanner & Live Analyzer Form
    -------------------------------------------------------------------------- */
 let latestAnalysisData = null;
+let activeVerifyPollTimer = null;
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function safeHttpUrl(url) {
+    if (!url || typeof url !== "string") return "#";
+    const trimmed = url.trim();
+    if (trimmed.startsWith("https://") || trimmed.startsWith("http://")) {
+        return trimmed;
+    }
+    return "#";
+}
 
 function initFormAnalyzer() {
     const form = document.getElementById("newsAnalyzerForm");
@@ -263,6 +293,10 @@ function initFormAnalyzer() {
     const hudStepText = document.getElementById("hudStepText");
     const submitBtn = document.getElementById("analyzeSubmitBtn");
     const resultPanel = document.getElementById("resultPanel");
+    const extToggle = document.getElementById("externalVerifyToggle");
+    const extSection = document.getElementById("externalVerificationSection");
+    const extProgress = document.getElementById("extVerifyProgress");
+    const extResults = document.getElementById("extVerifyResults");
 
     form.addEventListener("submit", async (e) => {
         const text = textarea ? textarea.value.trim() : "";
@@ -272,8 +306,14 @@ function initFormAnalyzer() {
             return;
         }
 
-        // We use AJAX for instant smooth HUD animation without page flicker
         e.preventDefault();
+
+        if (activeVerifyPollTimer) {
+            clearTimeout(activeVerifyPollTimer);
+            activeVerifyPollTimer = null;
+        }
+
+        const runExternal = extToggle ? extToggle.checked : false;
 
         // 1. Enter Scanning State
         if (submitBtn) {
@@ -282,6 +322,7 @@ function initFormAnalyzer() {
         }
         if (textareaWrapper) textareaWrapper.classList.add("scanning");
         if (resultPanel) resultPanel.style.display = "none";
+        if (extSection) extSection.style.display = "none";
         if (scannerHud) scannerHud.style.display = "block";
 
         const steps = [
@@ -302,7 +343,8 @@ function initFormAnalyzer() {
         }, 160);
 
         try {
-            const response = await fetch("/api/predict", {
+            const endpoint = runExternal ? "/api/verify" : "/api/predict";
+            const response = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ news: text })
@@ -310,23 +352,30 @@ function initFormAnalyzer() {
 
             const data = await response.json();
 
-            // Wait brief moment for realistic HUD sequence to complete
-            await new Promise(r => setTimeout(r, 900));
+            await new Promise(r => setTimeout(r, 850));
             clearInterval(stepInterval);
 
-            if (data.success) {
-                latestAnalysisData = data;
-                renderAnalysisResult(data);
-            } else {
+            if (!data.success) {
                 showToast(data.error || "Analysis failed.");
+                return;
+            }
+
+            const mlData = runExternal ? data.ml_analysis : data;
+            latestAnalysisData = mlData;
+            renderAnalysisResult(mlData);
+
+            if (runExternal && data.job_id && extSection) {
+                extSection.style.display = "block";
+                if (extProgress) extProgress.style.display = "block";
+                if (extResults) extResults.style.display = "none";
+                updateExternalProgress(10, "Extracting factual claims and searching GDELT...");
+                pollVerificationStatus(data.job_id);
             }
         } catch (error) {
             console.error("Analysis request failed:", error);
-            // Fallback to standard form submit if fetch fails
             form.submit();
             return;
         } finally {
-            // Restore UI state
             if (textareaWrapper) textareaWrapper.classList.remove("scanning");
             if (scannerHud) scannerHud.style.display = "none";
             if (submitBtn) {
@@ -335,6 +384,206 @@ function initFormAnalyzer() {
             }
         }
     });
+}
+
+function updateExternalProgress(pct, stageText) {
+    const fill = document.getElementById("extProgressFill");
+    const pctEl = document.getElementById("extProgressPct");
+    const stageEl = document.getElementById("extProgressStage");
+    if (fill) fill.style.width = `${pct}%`;
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    if (stageEl && stageText) stageEl.textContent = stageText;
+}
+
+async function pollVerificationStatus(jobId) {
+    try {
+        const resp = await fetch(`/api/verify/status/${encodeURIComponent(jobId)}`);
+        const job = await resp.json();
+
+        if (!job.success) {
+            showToast(job.error || "External verification error.");
+            return;
+        }
+
+        updateExternalProgress(job.progress || 15, job.stage || "Verifying claims...");
+
+        if (job.status === "completed" && job.result) {
+            renderExternalVerification(job.result);
+            return;
+        }
+        if (job.status === "failed") {
+            const prog = document.getElementById("extVerifyProgress");
+            if (prog) {
+                prog.innerHTML = `<div class="text-crimson small"><i class="bi bi-exclamation-triangle me-2"></i>External verification failed: ${escapeHtml(job.error || "Unknown error")}</div>`;
+            }
+            return;
+        }
+
+        activeVerifyPollTimer = setTimeout(() => pollVerificationStatus(jobId), 1200);
+    } catch (err) {
+        console.error("Polling error:", err);
+        activeVerifyPollTimer = setTimeout(() => pollVerificationStatus(jobId), 2000);
+    }
+}
+
+function renderExternalVerification(payload) {
+    const prog = document.getElementById("extVerifyProgress");
+    const resultsEl = document.getElementById("extVerifyResults");
+    if (prog) prog.style.display = "none";
+    if (resultsEl) resultsEl.style.display = "block";
+
+    const final = payload.final_assessment || {};
+    const ml = payload.ml_analysis || {};
+    const claims = payload.claims || [];
+    const sources = payload.sources || [];
+
+    // 1. Final Assessment Banner
+    const banner = document.getElementById("extFinalBanner");
+    if (banner) {
+        banner.classList.remove("final-real", "final-fake", "final-mixed", "final-unverified");
+        banner.classList.add(`final-${final.final_class || "unverified"}`);
+    }
+
+    const finalLabelEl = document.getElementById("extFinalLabel");
+    const finalSummaryEl = document.getElementById("extFinalSummary");
+    const evBadgeEl = document.getElementById("extEvidenceBadge");
+
+    if (finalLabelEl) finalLabelEl.textContent = final.final_label || "UNVERIFIED";
+    if (finalSummaryEl) finalSummaryEl.textContent = final.summary || "";
+
+    if (evBadgeEl) {
+        const verdict = final.external_verdict || "INSUFFICIENT EVIDENCE";
+        evBadgeEl.textContent = verdict;
+        evBadgeEl.className = "badge rounded-pill px-3 py-2 mt-1 ";
+        if (verdict === "SUPPORTED") evBadgeEl.className += "bg-success-subtle text-emerald";
+        else if (verdict === "CONTRADICTED") evBadgeEl.className += "bg-danger-subtle text-crimson";
+        else if (verdict === "MIXED") evBadgeEl.className += "bg-warning-subtle text-warning";
+        else evBadgeEl.className += "bg-secondary-subtle text-muted";
+    }
+
+    // Disagreement Alert
+    const disAlert = document.getElementById("extDisagreementAlert");
+    const disText = document.getElementById("extDisagreementText");
+    if (disAlert && disText) {
+        if (final.ml_external_disagreement && final.disagreement_note) {
+            disText.textContent = final.disagreement_note;
+            disAlert.style.display = "block";
+        } else {
+            disAlert.style.display = "none";
+        }
+    }
+
+    // Independent Comparison Pills
+    const cmpMl = document.getElementById("extCompareMl");
+    const cmpExt = document.getElementById("extCompareExternal");
+    const nliName = document.getElementById("extNliModelName");
+    if (cmpMl) cmpMl.textContent = `${ml.label || "N/A"} (${ml.confidence || 0}%)`;
+    if (cmpExt) cmpExt.textContent = final.external_verdict || "INSUFFICIENT EVIDENCE";
+    if (nliName && payload.nli_model) nliName.textContent = payload.nli_model.split("/").pop();
+
+    // 2. Extracted Factual Claims & Evidence
+    const claimsList = document.getElementById("extClaimsList");
+    const claimCountBadge = document.getElementById("extClaimCountBadge");
+    if (claimCountBadge) claimCountBadge.textContent = `${claims.length} Claim${claims.length === 1 ? "" : "s"}`;
+
+    if (claimsList) {
+        claimsList.innerHTML = "";
+        if (!claims.length) {
+            claimsList.innerHTML = `<div class="ext-claim-card text-muted small">No verifiable factual claims could be extracted from the submitted text.</div>`;
+        } else {
+            claims.forEach(c => {
+                let badgeCls = "bg-secondary-subtle text-muted";
+                if (c.label === "SUPPORTED") badgeCls = "bg-success-subtle text-emerald";
+                else if (c.label === "CONTRADICTED") badgeCls = "bg-danger-subtle text-crimson";
+                else if (c.label === "MIXED") badgeCls = "bg-warning-subtle text-warning";
+
+                const suppHtml = (c.supporting_evidence || []).map(ev => `
+                    <div class="ext-evidence-item ev-supporting mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-emerald small"><i class="bi bi-check-circle me-1"></i>Supporting &bull; ${escapeHtml(ev.publisher)}</strong>
+                            <span class="small text-muted font-monospace">NLI Entailment: ${(ev.entailment_score * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="text-muted">"${escapeHtml(ev.evidence_passage)}"</div>
+                    </div>
+                `).join("");
+
+                const contraHtml = (c.contradicting_evidence || []).map(ev => `
+                    <div class="ext-evidence-item ev-contradicting mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong class="text-crimson small"><i class="bi bi-x-circle me-1"></i>Contradicting &bull; ${escapeHtml(ev.publisher)}</strong>
+                            <span class="small text-muted font-monospace">NLI Contradiction: ${(ev.contradiction_score * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="text-muted">"${escapeHtml(ev.evidence_passage)}"</div>
+                    </div>
+                `).join("");
+
+                const card = document.createElement("div");
+                card.className = "ext-claim-card";
+                card.innerHTML = `
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                        <span class="badge bg-dark border border-secondary text-cyan small">CLAIM ${escapeHtml(c.claim_id)}</span>
+                        <span class="badge ${badgeCls} rounded-pill px-3 py-1">${escapeHtml(c.label)}</span>
+                    </div>
+                    <p class="text-white fw-semibold mb-1" style="font-size: 14.5px;">"${escapeHtml(c.claim_text)}"</p>
+                    <p class="text-muted small mb-2">${escapeHtml(c.rationale)}</p>
+                    ${suppHtml}
+                    ${contraHtml}
+                `;
+                claimsList.appendChild(card);
+            });
+        }
+    }
+
+    // 3. Retrieved External Source Cards (strictly real retrieved sources)
+    const sourcesList = document.getElementById("extSourcesList");
+    const sourceCountBadge = document.getElementById("extSourceCountBadge");
+    if (sourceCountBadge) sourceCountBadge.textContent = `${sources.length} Source${sources.length === 1 ? "" : "s"}`;
+
+    if (sourcesList) {
+        sourcesList.innerHTML = "";
+        if (!sources.length) {
+            sourcesList.innerHTML = `<div class="col-12"><div class="ext-source-card text-muted small">No external news sources were retrieved for the extracted claims.</div></div>`;
+        } else {
+            sources.forEach(src => {
+                let stanceBadge = `<span class="badge bg-secondary-subtle text-muted">NEUTRAL</span>`;
+                if (src.stance === "SUPPORTING") stanceBadge = `<span class="badge bg-success-subtle text-emerald">SUPPORTING</span>`;
+                else if (src.stance === "CONTRADICTING") stanceBadge = `<span class="badge bg-danger-subtle text-crimson">CONTRADICTING</span>`;
+
+                const safeUrl = safeHttpUrl(src.url);
+                const dateHtml = src.published_date
+                    ? `<span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>${escapeHtml(src.published_date)}</span>`
+                    : `<span class="small text-muted">Date unavailable</span>`;
+
+                const col = document.createElement("div");
+                col.className = "col-md-6";
+                col.innerHTML = `
+                    <div class="ext-source-card">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                <span class="badge bg-dark border border-secondary text-cyan small">${escapeHtml(src.publisher)} &bull; ${escapeHtml(src.domain)}</span>
+                                ${stanceBadge}
+                            </div>
+                            <h6 class="text-white fw-bold mb-2" style="font-size: 14.5px; line-height: 1.4;">${escapeHtml(src.title)}</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                ${dateHtml}
+                                <span class="small text-muted font-monospace">${src.accessible ? "Full text extracted" : escapeHtml(src.status_note || "Snippet only")}</span>
+                            </div>
+                            <div class="ext-source-passage mb-3">
+                                "${escapeHtml(src.evidence_passage)}"
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary-subtle">
+                            <span class="small text-muted font-monospace">Align: ${(src.entailment_score * 100).toFixed(0)}% Sup / ${(src.contradiction_score * 100).toFixed(0)}% Con</span>
+                            <a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="btn-cyber-outline btn-pill-sm">
+                                <span>Open Source</span> <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                sourcesList.appendChild(col);
+            });
+        }
+    }
 }
 
 /* --------------------------------------------------------------------------

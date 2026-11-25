@@ -15,3 +15,6 @@ models/*.joblib
 
 # System Files
 .DS_Store
+
+# Local Backups
+backups/

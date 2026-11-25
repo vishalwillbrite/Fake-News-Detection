@@ -1,13 +1,23 @@
 from flask import Flask, render_template, request, jsonify
 import joblib
+import logging
 import time
 from preprocessing import preprocess_text
+from services.verification_orchestrator import VerificationOrchestrator
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 app = Flask(__name__)
 
 # Load trained model and vectorizer
 model = joblib.load("models/fake_news_model.pkl")
 vectorizer = joblib.load("models/tfidf_vectorizer.pkl")
+
+# Initialize modular external verification orchestrator (lazy-loads NLI model on demand)
+verification_orchestrator = VerificationOrchestrator()
 
 
 def analyze_article(news_text):
@@ -124,13 +134,39 @@ def predict():
 @app.route("/api/predict", methods=["POST"])
 def api_predict():
     payload = request.get_json(silent=True) or request.form
-    news = payload.get("news", "").strip()
+    news = (payload.get("news") or "").strip()
 
     if not news:
         return jsonify({"success": False, "error": "No news text provided."}), 400
 
     data = analyze_article(news)
     return jsonify(data)
+
+
+# ---------------- API EXTERNAL VERIFY (BACKGROUND JOB) ----------------
+@app.route("/api/verify", methods=["POST"])
+def api_verify():
+    payload = request.get_json(silent=True) or request.form
+    news = (payload.get("news") or "").strip()
+
+    if not news:
+        return jsonify({"success": False, "error": "No news text provided."}), 400
+
+    ml_result = analyze_article(news)
+    job_id = verification_orchestrator.start_background_job(news, ml_result)
+    return jsonify({
+        "success": True,
+        "job_id": job_id,
+        "ml_analysis": ml_result,
+    }), 202
+
+
+@app.route("/api/verify/status/<job_id>", methods=["GET"])
+def api_verify_status(job_id):
+    job = verification_orchestrator.get_job_status(job_id)
+    if job is None:
+        return jsonify({"success": False, "error": "Verification job not found."}), 404
+    return jsonify({"success": True, **job})
 
 
 # ---------------- RUN APP ----------------
