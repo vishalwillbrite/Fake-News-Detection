@@ -65,25 +65,25 @@
                 <!-- Telemetry Grid -->
                 <div class="row g-3 my-4">
                     <div class="col-md-3 col-6">
-                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                        <div class="telemetry-stat-box">
                             <div class="text-muted small">Inference Latency</div>
                             <div class="fs-5 fw-bold text-cyan mt-1">{{ prediction_time }}s</div>
                         </div>
                     </div>
                     <div class="col-md-3 col-6">
-                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                        <div class="telemetry-stat-box">
                             <div class="text-muted small">Input Word Count</div>
                             <div class="fs-5 fw-bold text-white mt-1">{{ word_count }}</div>
                         </div>
                     </div>
                     <div class="col-md-3 col-6">
-                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                        <div class="telemetry-stat-box">
                             <div class="text-muted small">Stemmed Tokens</div>
                             <div class="fs-5 fw-bold text-indigo mt-1">{{ cleaned_word_count }}</div>
                         </div>
                     </div>
                     <div class="col-md-3 col-6">
-                        <div class="p-3 rounded-3 text-center" style="background: rgba(255,255,255,0.03); border:1px solid var(--border-glass);">
+                        <div class="telemetry-stat-box">
                             <div class="text-muted small">Feature Space</div>
                             <div class="fs-5 fw-bold text-warning mt-1">5,000 N-Grams</div>
                         </div>
@@ -109,7 +109,7 @@
 
                 <!-- Article Excerpt -->
                 {% if news_snippet %}
-                <div class="p-3 rounded-3 mb-4" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass);">
+                <div class="excerpt-box mb-4">
                     <div class="small text-muted mb-2"><i class="bi bi-file-text me-1 text-cyan"></i> Analyzed Article Preview:</div>
                     <p class="small text-light mb-0 font-monospace" style="opacity: 0.85; line-height: 1.6;">
                         "{{ news_snippet }}"

@@ -4,12 +4,31 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+    initThemeToggle();
     initParticles();
     initCounters();
     initNavbarScroll();
     initTextareaMetrics();
     initFormAnalyzer();
 });
+
+/* --------------------------------------------------------------------------
+   0. Theme Toggle (Dark & Light Mode Switching with LocalStorage Persistence)
+   -------------------------------------------------------------------------- */
+function initThemeToggle() {
+    const btn = document.getElementById("themeToggleBtn");
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("veritas_theme", newTheme);
+
+        showToast(`Switched to ${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} Mode`);
+    });
+}
 
 /* --------------------------------------------------------------------------
    1. Interactive Ambient Particle Canvas (Connected Cyber Grid)
