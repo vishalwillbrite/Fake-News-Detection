@@ -106,7 +106,7 @@ def _jaccard_similarity(a: set, b: set) -> float:
     return len(a & b) / len(a | b)
 
 
-def build_search_query(claim_text: str, max_terms: int = 6) -> str:
+def build_search_query(claim_text: str, max_terms: int = 4) -> str:
     """
     Build a concise keyword query from a factual claim for external news search.
     Prioritizes capitalized entities, numbers/years, and non-stopword content words.

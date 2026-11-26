@@ -50,7 +50,9 @@ class ClaimVerificationResult:
     supporting_evidence: List[EvaluatedEvidence]
     contradicting_evidence: List[EvaluatedEvidence]
     neutral_evidence: List[EvaluatedEvidence]
+    unretrieved_sources: List[EvaluatedEvidence]
     sources_checked: int
+    search_note: str = ""
 
     def to_dict(self):
         return {
@@ -62,7 +64,9 @@ class ClaimVerificationResult:
             "supporting_evidence": [e.to_dict() for e in self.supporting_evidence],
             "contradicting_evidence": [e.to_dict() for e in self.contradicting_evidence],
             "neutral_evidence": [e.to_dict() for e in self.neutral_evidence],
+            "unretrieved_sources": [e.to_dict() for e in self.unretrieved_sources],
             "sources_checked": self.sources_checked,
+            "search_note": self.search_note,
         }
 
 
@@ -164,10 +168,12 @@ class EvidenceVerificationService:
         claim_text: str,
         search_query: str,
         evidence_items: List[RetrievedEvidence],
+        search_note: str = "",
     ) -> ClaimVerificationResult:
         """
-        Compare a single extracted claim against all retrieved external evidence items.
-        Preserves supporting, contradicting, and neutral evidence separately.
+        Compare a single extracted claim against retrieved external evidence items.
+        Only evaluates articles whose content was actually retrieved; inaccessible
+        articles are recorded in `unretrieved_sources` and never used as proof.
         """
         if not evidence_items:
             return ClaimVerificationResult(
@@ -175,25 +181,43 @@ class EvidenceVerificationService:
                 claim_text=claim_text,
                 search_query=search_query,
                 label="INSUFFICIENT EVIDENCE",
-                rationale="No relevant external news articles were retrieved for this claim.",
+                rationale=(
+                    "No relevant external news articles were returned by search for this claim. "
+                    "Missing evidence does not prove the claim is false."
+                ),
                 supporting_evidence=[],
                 contradicting_evidence=[],
                 neutral_evidence=[],
+                unretrieved_sources=[],
                 sources_checked=0,
+                search_note=search_note,
             )
 
         supporting: List[EvaluatedEvidence] = []
         contradicting: List[EvaluatedEvidence] = []
         neutral: List[EvaluatedEvidence] = []
+        unretrieved: List[EvaluatedEvidence] = []
 
         for ev in evidence_items:
             premise = (ev.evidence_passage or "").strip()
-            if not premise:
+            if not ev.accessible or not premise:
+                unretrieved.append(
+                    EvaluatedEvidence(
+                        title=ev.title,
+                        url=ev.url,
+                        domain=ev.domain,
+                        publisher=ev.publisher,
+                        published_date=ev.published_date,
+                        evidence_passage="",
+                        accessible=False,
+                        status_note=ev.status_note or "Content could not be retrieved",
+                        stance="UNRETRIEVED",
+                        entailment_score=0.0,
+                        contradiction_score=0.0,
+                        neutral_score=0.0,
+                    )
+                )
                 continue
-
-            # Inaccessible pages only have a headline fallback; require slightly stricter confidence
-            entail_thresh = ENTAILMENT_THRESHOLD if ev.accessible else 0.72
-            contra_thresh = CONTRADICTION_THRESHOLD if ev.accessible else 0.72
 
             try:
                 scores = self.score_nli(premise, claim_text)
@@ -205,9 +229,9 @@ class EvidenceVerificationService:
             con = scores.get("contradiction", 0.0)
             neu = scores.get("neutral", 0.0)
 
-            if ent >= entail_thresh and (ent - con) >= MARGIN_THRESHOLD:
+            if ent >= ENTAILMENT_THRESHOLD and (ent - con) >= MARGIN_THRESHOLD:
                 stance = "SUPPORTING"
-            elif con >= contra_thresh and (con - ent) >= MARGIN_THRESHOLD:
+            elif con >= CONTRADICTION_THRESHOLD and (con - ent) >= MARGIN_THRESHOLD:
                 stance = "CONTRADICTING"
             else:
                 stance = "NEUTRAL"
@@ -219,7 +243,7 @@ class EvidenceVerificationService:
                 publisher=ev.publisher,
                 published_date=ev.published_date,
                 evidence_passage=premise,
-                accessible=ev.accessible,
+                accessible=True,
                 status_note=ev.status_note,
                 stance=stance,
                 entailment_score=round(ent, 3),
@@ -234,28 +258,46 @@ class EvidenceVerificationService:
             else:
                 neutral.append(evaluated)
 
-        # Determine claim-level label without assuming search presence = true or missing = fake
+        accessible_count = len(supporting) + len(contradicting) + len(neutral)
+        unretrieved_note = (
+            f" ({len(unretrieved)} additional candidate source(s) could not be accessed.)"
+            if unretrieved
+            else ""
+        )
+
+        # Determine claim-level label strictly from accessible retrieved content
         if supporting and contradicting:
             label = "MIXED"
             rationale = (
-                f"Conflicting evidence found: {len(supporting)} source(s) align with the claim "
-                f"while {len(contradicting)} source(s) contradict it."
+                f"Conflicting evidence across {accessible_count} retrieved article(s): "
+                f"{len(supporting)} source(s) entail the claim while {len(contradicting)} "
+                f"source(s) contradict it.{unretrieved_note}"
             )
         elif supporting:
             label = "SUPPORTED"
+            top_pubs = ", ".join(e.publisher for e in supporting[:3])
             rationale = (
-                f"Supported by {len(supporting)} external source(s) via local NLI semantic alignment."
+                f"Supported by {len(supporting)} retrieved article(s) ({top_pubs}), whose "
+                f"extracted passages semantically entail this claim.{unretrieved_note}"
             )
         elif contradicting:
             label = "CONTRADICTED"
+            top_pubs = ", ".join(e.publisher for e in contradicting[:3])
             rationale = (
-                f"Contradicted by {len(contradicting)} external source(s) via local NLI semantic alignment."
+                f"Contradicted by {len(contradicting)} retrieved article(s) ({top_pubs}), whose "
+                f"extracted passages conflict with this claim.{unretrieved_note}"
+            )
+        elif accessible_count > 0:
+            label = "INSUFFICIENT EVIDENCE"
+            rationale = (
+                f"Examined {accessible_count} accessible article(s), but the extracted passages "
+                f"were neutral or inconclusive and did not clearly confirm or refute the claim.{unretrieved_note}"
             )
         else:
             label = "INSUFFICIENT EVIDENCE"
             rationale = (
-                f"Checked {len(evidence_items)} source(s), but none provided decisive supporting or "
-                f"contradicting evidence for this claim."
+                f"Found {len(unretrieved)} candidate article(s), but none were accessible for "
+                "content extraction, so the claim cannot be verified from retrieved text."
             )
 
         return ClaimVerificationResult(
@@ -267,5 +309,7 @@ class EvidenceVerificationService:
             supporting_evidence=supporting,
             contradicting_evidence=contradicting,
             neutral_evidence=neutral,
+            unretrieved_sources=unretrieved,
             sources_checked=len(evidence_items),
+            search_note=search_note,
         )

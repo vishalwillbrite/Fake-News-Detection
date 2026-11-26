@@ -136,7 +136,17 @@ class TestEvidenceRetrievalService(unittest.TestCase):
         self.assertIn("NASA successfully launched", evidence[0].evidence_passage)
         self.assertNotIn("<script>", evidence[0].evidence_passage)
         self.assertFalse(evidence[1].accessible)
+        self.assertEqual(evidence[1].evidence_passage, "")
         self.assertIn("403", evidence[1].status_note)
+
+        # Inaccessible source must go to unretrieved_sources and NOT be scored by NLI
+        verifier = EvidenceVerificationService(
+            nli_scorer=lambda p, h: {"entailment": 0.90, "contradiction": 0.04, "neutral": 0.06}
+        )
+        c_res = verifier.verify_claim(1, "NASA launched the Artemis weather satellite.", "NASA Artemis", evidence)
+        self.assertEqual(len(c_res.supporting_evidence), 1)
+        self.assertEqual(len(c_res.unretrieved_sources), 1)
+        self.assertEqual(c_res.unretrieved_sources[0].stance, "UNRETRIEVED")
 
 
 class TestEvidenceVerificationAndFinalDecision(unittest.TestCase):

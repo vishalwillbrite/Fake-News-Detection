@@ -109,6 +109,7 @@ class GDELTSearchProvider(NewsSearchProvider):
         self._cache: Dict[str, Tuple[float, List[SearchArticle]]] = {}
         self._lock = threading.Lock()
         self._last_request_ts = 0.0
+        self.last_error: Optional[str] = None
 
     def _respect_rate_limit(self):
         with self._lock:
@@ -123,6 +124,7 @@ class GDELTSearchProvider(NewsSearchProvider):
         Query GDELT DOC 2.0 API and return deduplicated, relevance-filtered SearchArticle objects.
         Never raises on network/API errors; returns empty list and logs warnings.
         """
+        self.last_error = None
         sanitized_query = _sanitize_gdelt_query(query)
         if not sanitized_query:
             return []
@@ -152,27 +154,34 @@ class GDELTSearchProvider(NewsSearchProvider):
                     timeout=self.timeout,
                 )
                 if resp.status_code == 429:
+                    self.last_error = "GDELT API rate limited (HTTP 429)"
                     logger.warning("GDELT rate limited (429); waiting 5.2s to respect API rate limit.")
                     time.sleep(5.2)
                     continue
                 if resp.status_code >= 400:
+                    self.last_error = f"GDELT HTTP error {resp.status_code}"
                     logger.warning("GDELT HTTP error %s for query '%s'", resp.status_code, sanitized_query)
                     return []
 
                 # GDELT occasionally returns plain-text warnings with HTTP 200
                 text_body = (resp.text or "").strip()
                 if not text_body or not text_body.startswith("{"):
+                    self.last_error = "GDELT returned non-JSON response"
                     logger.warning("GDELT returned non-JSON response for '%s': %s", sanitized_query, text_body[:120])
                     return []
 
                 data = resp.json()
+                self.last_error = None
                 break
             except requests.Timeout:
+                self.last_error = "GDELT request timed out"
                 logger.warning("GDELT request timed out for query '%s' (attempt %d)", sanitized_query, attempt + 1)
             except requests.RequestException as exc:
+                self.last_error = f"GDELT network error ({type(exc).__name__})"
                 logger.warning("GDELT request error for query '%s': %s", sanitized_query, exc)
                 return []
             except ValueError as exc:
+                self.last_error = "GDELT invalid JSON response"
                 logger.warning("GDELT JSON parse error for query '%s': %s", sanitized_query, exc)
                 return []
 

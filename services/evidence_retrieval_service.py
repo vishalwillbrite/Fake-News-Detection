@@ -284,7 +284,7 @@ class EvidenceRetrievalService:
                     html = raw_bytes.decode(encoding, errors="replace")
                     extracted = _extract_main_text(html, url=url)
                     pub_date = _extract_published_date_from_html(html)
-                    if extracted:
+                    if extracted and len(extracted) >= 80 and len(extracted.split()) >= 12:
                         result = {
                             "accessible": True,
                             "text": extracted[:15000],
@@ -296,7 +296,7 @@ class EvidenceRetrievalService:
                             "accessible": False,
                             "text": "",
                             "published_date": pub_date,
-                            "status_note": "No readable article body extracted",
+                            "status_note": "No readable article body extracted (JS-only or blocked)",
                         }
         except requests.Timeout:
             result = {"accessible": False, "text": "", "published_date": None, "status_note": "Request timed out"}
@@ -326,9 +326,13 @@ class EvidenceRetrievalService:
             fetched = self.fetch_article_text(art.url)
             if fetched["accessible"] and fetched["text"]:
                 passage = select_relevant_passage(fetched["text"], claim_text)
+                accessible = bool(passage)
+                status_note = fetched["status_note"] if accessible else "No relevant passage extracted"
             else:
-                # Fallback only to the real retrieved article title if body is inaccessible; never fabricate
-                passage = art.title
+                # Never fabricate or use search title as proof when webpage content could not be retrieved
+                passage = ""
+                accessible = False
+                status_note = fetched["status_note"]
 
             return idx, RetrievedEvidence(
                 title=art.title,
@@ -337,8 +341,8 @@ class EvidenceRetrievalService:
                 publisher=art.publisher,
                 published_date=art.published_date or fetched.get("published_date"),
                 evidence_passage=passage,
-                accessible=fetched["accessible"],
-                status_note=fetched["status_note"],
+                accessible=accessible,
+                status_note=status_note,
                 provider=art.provider,
             )
 

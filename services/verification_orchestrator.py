@@ -12,6 +12,7 @@ import time
 import uuid
 from typing import Callable, Dict, List, Optional
 
+from services.bing_rss_service import BingNewsRSSProvider
 from services.claim_extraction_service import ExtractedClaim, extract_claims
 from services.evidence_retrieval_service import EvidenceRetrievalService, RetrievedEvidence
 from services.evidence_verification_service import (
@@ -39,7 +40,10 @@ class VerificationOrchestrator:
         verification_service: Optional[EvidenceVerificationService] = None,
         cache_ttl: int = 600,
     ):
-        self.providers: List[NewsSearchProvider] = providers or [GDELTSearchProvider()]
+        self.providers: List[NewsSearchProvider] = providers or [
+            GDELTSearchProvider(),
+            BingNewsRSSProvider(),
+        ]
         self.retrieval_service = retrieval_service or EvidenceRetrievalService()
         self.verification_service = verification_service or EvidenceVerificationService()
         self.cache_ttl = cache_ttl
@@ -49,21 +53,36 @@ class VerificationOrchestrator:
         self._result_cache: Dict[str, tuple] = {}
         self._lock = threading.Lock()
 
-    def _search_providers(self, query: str, claim_text: str, max_results: int = 4) -> List[SearchArticle]:
-        """Query all configured search providers and merge deduplicated results."""
+    def _search_providers(self, query: str, claim_text: str, max_results: int = 4) -> tuple:
+        """
+        Query configured search providers in priority order (GDELT first).
+        Falls back to secondary free providers if primary is rate-limited or empty.
+        Returns (articles, search_note).
+        """
         merged: List[SearchArticle] = []
         seen_urls = set()
+        notes: List[str] = []
+
         for provider in self.providers:
+            pname = getattr(provider, "name", "provider")
             try:
                 hits = provider.search(query=query, claim_text=claim_text, max_results=max_results)
+                last_err = getattr(provider, "last_error", None)
+                if last_err:
+                    notes.append(f"{pname}: {last_err}")
                 for art in hits:
                     norm = art.url.strip().lower().rstrip("/")
                     if norm not in seen_urls:
                         seen_urls.add(norm)
                         merged.append(art)
+                if len(merged) >= max_results:
+                    notes.append(f"Retrieved {len(merged)} candidate(s) via {pname}")
+                    break
             except Exception as exc:
-                logger.warning("Search provider '%s' failed: %s", getattr(provider, "name", "unknown"), exc)
-        return merged[:max_results]
+                logger.warning("Search provider '%s' failed: %s", pname, exc)
+                notes.append(f"{pname}: error")
+
+        return merged[:max_results], " | ".join(notes)
 
     def verify_article(
         self,
@@ -90,7 +109,7 @@ class VerificationOrchestrator:
                 return cached_payload
 
         if progress_cb:
-            progress_cb("Extracting verifiable factual claims from article...", 15)
+            progress_cb("04/05 – Extracting claims and searching external sources...", 60)
 
         claims: List[ExtractedClaim] = extract_claims(news_text, max_claims=max_claims)
         claim_results: List[ClaimVerificationResult] = []
@@ -98,18 +117,18 @@ class VerificationOrchestrator:
 
         if not claims:
             if progress_cb:
-                progress_cb("No checkworthy factual claims extracted.", 85)
+                progress_cb("05/05 – No checkworthy factual claims extracted.", 95)
         else:
             total_claims = len(claims)
             for idx, claim in enumerate(claims):
-                pct_base = 20 + int((idx / max(1, total_claims)) * 65)
+                pct_base = 62 + int((idx / max(1, total_claims)) * 20)
                 if progress_cb:
                     progress_cb(
-                        f"Searching external sources for claim {idx + 1}/{total_claims}...",
+                        f"04/05 – Extracting claims and searching external sources ({idx + 1}/{total_claims})...",
                         pct_base,
                     )
 
-                articles = self._search_providers(
+                articles, search_note = self._search_providers(
                     query=claim.search_query,
                     claim_text=claim.text,
                     max_results=4,
@@ -117,8 +136,8 @@ class VerificationOrchestrator:
 
                 if progress_cb:
                     progress_cb(
-                        f"Retrieving & verifying evidence for claim {idx + 1}/{total_claims}...",
-                        min(90, pct_base + 10),
+                        f"05/05 – Comparing evidence using local NLI ({idx + 1}/{total_claims})...",
+                        min(92, pct_base + 12),
                     )
 
                 retrieved: List[RetrievedEvidence] = self.retrieval_service.retrieve_evidence_for_claim(
@@ -132,18 +151,25 @@ class VerificationOrchestrator:
                     claim_text=claim.text,
                     search_query=claim.search_query,
                     evidence_items=retrieved,
+                    search_note=search_note,
                 )
                 claim_results.append(claim_ver)
 
-                # Collect unique source cards with their NLI stance
+                # Collect unique source cards with their claim associations and NLI stance
                 for ev in (
                     claim_ver.supporting_evidence
                     + claim_ver.contradicting_evidence
                     + claim_ver.neutral_evidence
+                    + claim_ver.unretrieved_sources
                 ):
                     key = ev.url.strip().lower().rstrip("/")
                     if key not in all_sources_map:
-                        all_sources_map[key] = ev.to_dict()
+                        src_dict = ev.to_dict()
+                        src_dict["claim_ids"] = [claim.claim_id]
+                        all_sources_map[key] = src_dict
+                    else:
+                        if claim.claim_id not in all_sources_map[key]["claim_ids"]:
+                            all_sources_map[key]["claim_ids"].append(claim.claim_id)
 
         if progress_cb:
             progress_cb("Computing independent final assessment...", 95)

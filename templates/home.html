@@ -1,334 +1,241 @@
 {% extends "base.html" %}
 
-{% block title %}VERITAS AI &mdash; Advanced Fake News Detection System{% endblock %}
+{% block title %}VERITAS.AI &mdash; Verify Real vs. Fake News{% endblock %}
 
 {% block content %}
 <!-- ==========================================================================
-     HERO SECTION
+     NEWSPAPER MASTHEAD
      ========================================================================== -->
-<section class="hero-wrapper">
-    <div class="container">
-        <div class="row align-items-center gy-5">
-            <!-- Left Headline Column -->
-            <div class="col-lg-7">
-                <div class="system-status-pill">
-                    <span class="status-dot"></span>
-                    <span>AI MISINFORMATION DEFENSE GRID &bull; 98.7% ACCURACY</span>
-                </div>
-
-                <h1 class="hero-heading">
-                    Dissect Misinformation.<br>
-                    <span class="gradient-text">Reveal The Truth.</span>
-                </h1>
-
-                <p class="hero-subtitle">
-                    Harnessing Natural Language Processing, 5,000-dimensional TF-IDF matrices, and regularized Logistic Regression to detect deceptive rhetoric, unverified claims, and propaganda in milliseconds.
-                </p>
-
-                <div class="d-flex flex-wrap gap-3 align-items-center">
-                    <a href="{{ url_for('dashboard') }}" class="btn-cyber-primary">
-                        <i class="bi bi-shield-check fs-5"></i>
-                        <span>Launch Live Scanner</span>
-                    </a>
-                    <a href="#pipeline" class="btn-cyber-outline">
-                        <i class="bi bi-diagram-3"></i>
-                        <span>Explore Pipeline</span>
-                    </a>
-                </div>
-
-                <!-- Verified Model Badges -->
-                <div class="d-flex align-items-center gap-3 mt-4 pt-2">
-                    <span class="badge bg-dark border border-secondary text-light px-3 py-2 rounded-pill small">
-                        <i class="bi bi-check2-circle text-emerald me-1"></i> 44,898 Benchmark Articles
-                    </span>
-                    <span class="badge bg-dark border border-secondary text-light px-3 py-2 rounded-pill small">
-                        <i class="bi bi-cpu text-cyan me-1"></i> L2 Logistic Regression
-                    </span>
-                </div>
-            </div>
-
-            <!-- Right Interactive Hologram Console -->
-            <div class="col-lg-5">
-                <div class="hero-hologram-card">
-                    <!-- Floating Tech Chips -->
-                    <div class="floating-chip chip-1">
-                        <i class="bi bi-lightning-charge-fill text-warning"></i>
-                        <span class="text-white fw-bold">&lt; 0.02s</span>
-                        <span class="text-muted small">Latency</span>
-                    </div>
-
-                    <div class="floating-chip chip-2">
-                        <i class="bi bi-patch-check-fill text-cyan"></i>
-                        <span class="text-white fw-bold">98.7%</span>
-                        <span class="text-muted small">Validated</span>
-                    </div>
-
-                    <!-- Glowing Radar Scanner -->
-                    <div class="radar-circle">
-                        <div class="radar-core">
-                            <i class="bi bi-fingerprint"></i>
-                        </div>
-                    </div>
-
-                    <div class="text-center">
-                        <h4 class="text-white mb-1">Veritas Core Neural HUD</h4>
-                        <p class="text-muted small mb-3">Continuous lexical vector analysis</p>
-                    </div>
-
-                    <!-- Hologram Telemetry Bar -->
-                    <div class="telemetry-stat-box text-start">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="small text-muted"><i class="bi bi-activity text-cyan me-1"></i> Ingestion Feed</span>
-                            <span class="badge bg-success-subtle text-success small">Optimal</span>
-                        </div>
-                        <div class="progress" style="height: 6px; background: rgba(255,255,255,0.08);">
-                            <div class="progress-bar bg-info" style="width: 88%;"></div>
-                        </div>
-                        <div class="d-flex justify-content-between small text-muted mt-2">
-                            <span>TF-IDF Dimensions: 5,000</span>
-                            <span class="text-cyan">Loss: 0.018</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<section class="container">
+    <div class="masthead-banner">
+        <h1 class="masthead-title">VERITAS.AI</h1>
+        <div class="masthead-meta-strip">
+            <span>VOL. II &bull; INVESTIGATIVE FACT &amp; ML VERIFICATION</span>
+            <span>GOAL: IDENTIFY REAL VS. FAKE NEWS WITH EXTERNAL PROOF</span>
+            <span><span class="status-dot"></span>SYSTEM ONLINE</span>
         </div>
     </div>
 </section>
 
 <!-- ==========================================================================
-     STATISTICS COUNTER RIBBON
+     BROADSHEET FRONT-PAGE GRID (PHOTOJOURNALISM + GOAL-FIRST QUICK VERIFY)
      ========================================================================== -->
-<section class="container stats-ribbon">
-    <div class="glass-panel">
-        <div class="row g-0">
-            <div class="col-md-3 col-6 stat-item">
-                <div class="stat-number text-cyan" data-counter-target="44898" data-counter-suffix="+">44,898+</div>
-                <div class="stat-label">Trained News Articles</div>
-            </div>
-            <div class="col-md-3 col-6 stat-item">
-                <div class="stat-number text-emerald" data-counter-target="98.7" data-counter-decimals="1" data-counter-suffix="%">98.7%</div>
-                <div class="stat-label">Empirical Accuracy</div>
-            </div>
-            <div class="col-md-3 col-6 stat-item">
-                <div class="stat-number text-indigo" data-counter-target="21" data-counter-prefix="< " data-counter-suffix="ms">&lt; 21ms</div>
-                <div class="stat-label">Inference Speed</div>
-            </div>
-            <div class="col-md-3 col-6 stat-item">
-                <div class="stat-number text-warning" data-counter-target="5000" data-counter-suffix=" Features">5,000</div>
-                <div class="stat-label">TF-IDF Vector Space</div>
-            </div>
-        </div>
-    </div>
-</section>
+<section class="container broadsheet-grid">
+    <div class="row g-0">
+        <!-- Main Lead Story Column (Left 8 cols) -->
+        <div class="col-lg-8 broadsheet-lead">
+            <div class="sidebar-kicker mb-2">SPECIAL REPORT &bull; TRUTH VERIFICATION DESK</div>
+            <h2 class="lead-headline">
+                Is This News Article Real or Fabricated? Verify Every Claim.
+            </h2>
 
-<!-- ==========================================================================
-     CORE CAPABILITIES & ARCHITECTURE
-     ========================================================================== -->
-<section class="container py-5">
-    <div class="text-center mb-5">
-        <span class="badge bg-primary-subtle text-cyan px-3 py-1 rounded-pill small mb-2">INTELLIGENT ARCHITECTURE</span>
-        <h2 class="display-6 fw-bold text-white">How Veritas Uncovers Deception</h2>
-        <p class="text-muted mx-auto" style="max-width: 600px;">
-            Sophisticated computational linguistics combined with statistical machine learning algorithms trained across decades of authentic and fabricate media.
-        </p>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-4 col-md-6">
-            <div class="glass-panel feature-card glass-panel-hover">
-                <div class="feature-icon-wrapper">
-                    <i class="bi bi-funnel"></i>
+            <!-- B&W Editorial Hero Photo -->
+            <div class="editorial-photo-frame" style="max-height: 330px;">
+                <img src="{{ url_for('static', filename='images/editorial_hero.jpg') }}" alt="VERITAS.AI Investigative Newsroom">
+                <div class="editorial-photo-caption">
+                    <span>FIG 01. COMPUTATIONAL NEWSROOM &amp; CLAIM VERIFICATION</span>
+                    <span class="text-cyan fw-semibold">98.7% ML BENCHMARK &bull; GDELT + NLI</span>
                 </div>
-                <h4 class="feature-title">NLP Stopword &amp; Noise Removal</h4>
-                <p class="feature-desc">
-                    Filters out 179 non-discriminative grammatical articles, punctuation, and typographical noise to isolate the semantic core of every news piece.
-                </p>
             </div>
-        </div>
 
-        <div class="col-lg-4 col-md-6">
-            <div class="glass-panel feature-card glass-panel-hover">
-                <div class="feature-icon-wrapper">
-                    <i class="bi bi-tree"></i>
-                </div>
-                <h4 class="feature-title">Porter Stemming Algorithm</h4>
-                <p class="feature-desc">
-                    Extracts fundamental morphological word roots (e.g. "fabricated", "fabrication" &rarr; "fabric") to standardize syntactic vocabulary across publishers.
-                </p>
-            </div>
-        </div>
-
-        <div class="col-lg-4 col-md-6">
-            <div class="glass-panel feature-card glass-panel-hover">
-                <div class="feature-icon-wrapper">
-                    <i class="bi bi-grid-3x3"></i>
-                </div>
-                <h4 class="feature-title">5,000 TF-IDF N-Grams</h4>
-                <p class="feature-desc">
-                    Weights vocabulary by Term Frequency &times; Inverse Document Frequency, penalizing ubiquitous words while amplifying high-leverage deceptive phraseology.
-                </p>
-            </div>
-        </div>
-
-        <div class="col-lg-4 col-md-6">
-            <div class="glass-panel feature-card glass-panel-hover">
-                <div class="feature-icon-wrapper">
-                    <i class="bi bi-cpu"></i>
-                </div>
-                <h4 class="feature-title">Regularized Logistic Regression</h4>
-                <p class="feature-desc">
-                    Applies mathematical decision boundaries with L2 regularization to balance high precision and sensitivity without overfitting.
-                </p>
-            </div>
-        </div>
-
-        <div class="col-lg-4 col-md-6">
-            <div class="glass-panel feature-card glass-panel-hover">
-                <div class="feature-icon-wrapper">
-                    <i class="bi bi-speedometer2"></i>
-                </div>
-                <h4 class="feature-title">Sub-Millisecond Inference</h4>
-                <p class="feature-desc">
-                    Optimized vectorized matrix transformations enable lightning-fast predictions suited for high-throughput newsrooms and browser extensions.
-                </p>
-            </div>
-        </div>
-
-        <div class="col-lg-4 col-md-6">
-            <div class="glass-panel feature-card glass-panel-hover">
-                <div class="feature-icon-wrapper">
-                    <i class="bi bi-file-earmark-lock"></i>
-                </div>
-                <h4 class="feature-title">Calibrated Forensic Metrics</h4>
-                <p class="feature-desc">
-                    Generates transparent confidence probabilities, keyword attribution tags, and full audit logs for academic or journalistic scrutiny.
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ==========================================================================
-     INTERACTIVE NLP PIPELINE VISUALIZATION (#pipeline)
-     ========================================================================== -->
-<section id="pipeline" class="container py-5">
-    <div class="glass-panel p-5">
-        <div class="text-center mb-5">
-            <span class="badge bg-info-subtle text-cyan px-3 py-1 rounded-pill small mb-2">END-TO-END PIPELINE</span>
-            <h2 class="display-6 fw-bold text-white">The Verification Workflow</h2>
-            <p class="text-muted mx-auto" style="max-width: 600px;">
-                From raw unstructured text to calibrated probabilistic verdict in five automated stages.
+            <p class="lead-deck">
+                Paste any headline or news article below to classify its linguistic style using our trained Logistic Regression model <strong>and</strong> independently cross-check its factual claims against live external news websites.
             </p>
+
+            <!-- Goal-First Instant Quick-Verify Box -->
+            <div class="quick-verify-box">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="sidebar-kicker"><i class="bi bi-search me-1"></i> INSTANT ARTICLE CHECK</span>
+                    <span class="small text-muted font-monospace">ML + GDELT + LOCAL NLI</span>
+                </div>
+                <form action="{{ url_for('dashboard') }}" method="GET" class="d-flex flex-column flex-sm-row gap-2">
+                    <input
+                        type="text"
+                        name="prefill"
+                        class="quick-verify-input"
+                        placeholder="Paste a news headline or excerpt to check if it's REAL or FAKE..."
+                        required>
+                    <button type="submit" class="btn-cyber-primary text-nowrap justify-content-center">
+                        Verify Now <i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+                <div class="d-flex flex-wrap gap-2 mt-2 pt-2 border-top" style="border-color: var(--border-hairline) !important;">
+                    <span class="small text-muted font-monospace me-1">Quick Open:</span>
+                    <a href="{{ url_for('dashboard') }}?sample=real" class="small text-emerald text-decoration-none font-monospace fw-semibold">
+                        <i class="bi bi-shield-check"></i> Test Real Sample
+                    </a>
+                    <span class="text-muted">&bull;</span>
+                    <a href="{{ url_for('dashboard') }}?sample=fake" class="small text-crimson text-decoration-none font-monospace fw-semibold">
+                        <i class="bi bi-shield-x"></i> Test Fake Sample
+                    </a>
+                </div>
+            </div>
         </div>
 
-        <div class="row g-3">
-            <div class="col-lg col-md-4 col-12">
-                <div class="pipeline-step">
-                    <span class="step-badge">STAGE 01</span>
-                    <h5 class="step-title">Text Ingestion</h5>
-                    <p class="step-text">Parses raw input text, handles empty characters, and strips HTML markup or escape artifacts.</p>
+        <!-- Right Broadsheet Sidebar (Stacked Index with B&W Thumbnails) -->
+        <div class="col-lg-4 broadsheet-sidebar">
+            <div class="d-flex justify-content-between align-items-baseline pb-2 mb-3 border-bottom" style="border-color: var(--border-strong) !important;">
+                <span class="sidebar-kicker fw-bold">HOW IT VERIFIES (05)</span>
+                <span class="sidebar-kicker">PIPELINE</span>
+            </div>
+
+            <!-- Featured B&W Desk Photo -->
+            <div class="editorial-photo-frame mb-3" style="max-height: 170px;">
+                <img src="{{ url_for('static', filename='images/editorial_verify.jpg') }}" alt="Fact-Checking Desk and Magnifying Lens">
+                <div class="editorial-photo-caption">
+                    <span>FIG 02. EVIDENCE CROSS-EXAMINATION</span>
                 </div>
             </div>
 
-            <div class="col-lg col-md-4 col-12">
-                <div class="pipeline-step">
-                    <span class="step-badge">STAGE 02</span>
-                    <h5 class="step-title">Stopword Filter</h5>
-                    <p class="step-text">Removes 179 standard English stopwords and strips special characters, punctuation, and digits.</p>
+            <div class="sidebar-article-item d-flex gap-3 align-items-start">
+                <div class="sidebar-thumb">
+                    <img src="{{ url_for('static', filename='images/editorial_thumb.jpg') }}" alt="Broadsheet Stack">
+                </div>
+                <div>
+                    <div class="sidebar-kicker">01 &bull; LINGUISTIC ML</div>
+                    <div class="sidebar-headline">TF-IDF + Logistic Classifier</div>
+                    <p class="small text-muted mb-0">Scores writing style across 5,000 Porter-stemmed features in &lt;21ms.</p>
                 </div>
             </div>
 
-            <div class="col-lg col-md-4 col-12">
-                <div class="pipeline-step">
-                    <span class="step-badge">STAGE 03</span>
-                    <h5 class="step-title">Porter Stemmer</h5>
-                    <p class="step-text">Normalizes morphological variations into singular linguistic stem representations.</p>
-                </div>
+            <div class="sidebar-article-item">
+                <div class="sidebar-kicker">02 &bull; DECOMPOSITION</div>
+                <div class="sidebar-headline">Factual Claim Extraction</div>
+                <p class="small text-muted mb-0">Isolates checkworthy statements and builds focused search queries.</p>
             </div>
 
-            <div class="col-lg col-md-6 col-12">
-                <div class="pipeline-step">
-                    <span class="step-badge">STAGE 04</span>
-                    <h5 class="step-title">TF-IDF Matrix</h5>
-                    <p class="step-text">Transforms processed tokens into high-dimensional vector representations across 5,000 features.</p>
-                </div>
+            <div class="sidebar-article-item">
+                <div class="sidebar-kicker">03 &bull; EXTERNAL SEARCH</div>
+                <div class="sidebar-headline">GDELT DOC 2.0 &amp; Live RSS</div>
+                <p class="small text-muted mb-0">Retrieves accessible external news articles and extracts relevant passages.</p>
             </div>
 
-            <div class="col-lg col-md-6 col-12">
-                <div class="pipeline-step" style="border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.06);">
-                    <span class="step-badge" style="background:var(--primary); color:white;">STAGE 05</span>
-                    <h5 class="step-title">Logistic Classifier</h5>
-                    <p class="step-text">Computes sigmoid activation function yielding calibrated confidence scores for Real vs Fake.</p>
-                </div>
+            <div class="sidebar-article-item">
+                <div class="sidebar-kicker">04 &bull; LOCAL NLI</div>
+                <div class="sidebar-headline">Entailment &amp; Contradiction Check</div>
+                <p class="small text-muted mb-0">Evaluates claims as SUPPORTED, CONTRADICTED, MIXED, or INSUFFICIENT EVIDENCE.</p>
+            </div>
+
+            <div class="sidebar-article-item">
+                <div class="sidebar-kicker">05 &bull; FINAL ASSESSMENT</div>
+                <div class="sidebar-headline">Transparent Real / Fake Verdict</div>
+                <p class="small text-muted mb-0">Flags ML vs. external disagreements and links directly to original sources.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- ==========================================================================
-     MODEL METRICS & VALIDATION CHARTS (#metrics)
+     STATISTICS STRIP
      ========================================================================== -->
-<section id="metrics" class="container py-5">
-    <div class="text-center mb-5">
-        <span class="badge bg-warning-subtle text-warning px-3 py-1 rounded-pill small mb-2">EMPIRICAL PROOF</span>
-        <h2 class="display-6 fw-bold text-white">Model Training &amp; Evaluation</h2>
-        <p class="text-muted mx-auto" style="max-width: 600px;">
-            Empirical validation charts generated during model training across 44,898 authenticated articles.
-        </p>
+<section class="container stats-ribbon reveal-on-scroll">
+    <div class="row g-0">
+        <div class="col-md-3 col-6 stat-item">
+            <div class="stat-number" data-counter-target="44898" data-counter-suffix="+">44,898+</div>
+            <div class="stat-label">Benchmark Corpus</div>
+        </div>
+        <div class="col-md-3 col-6 stat-item">
+            <div class="stat-number text-emerald" data-counter-target="98.7" data-counter-decimals="1" data-counter-suffix="%">98.7%</div>
+            <div class="stat-label">Validation Accuracy</div>
+        </div>
+        <div class="col-md-3 col-6 stat-item">
+            <div class="stat-number text-cyan" data-counter-target="21" data-counter-prefix="< " data-counter-suffix="ms">&lt; 21ms</div>
+            <div class="stat-label">ML Inference Speed</div>
+        </div>
+        <div class="col-md-3 col-6 stat-item">
+            <div class="stat-number" data-counter-target="5000">5,000</div>
+            <div class="stat-label">TF-IDF Vector Space</div>
+        </div>
+    </div>
+</section>
+
+<!-- ==========================================================================
+     METHODOLOGY & CAPABILITIES (#pipeline)
+     ========================================================================== -->
+<section id="pipeline" class="container py-5 border-bottom reveal-on-scroll" style="border-color: var(--border-hairline) !important;">
+    <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 pb-2 border-bottom" style="border-color: var(--border-strong) !important;">
+        <div>
+            <div class="sidebar-kicker">METHODOLOGY</div>
+            <h2 class="display-6 mb-0">Independent Style &amp; Evidence Verification</h2>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-cyber-primary btn-pill-sm mt-2 mt-md-0">Open Full Console</a>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-4 col-md-6">
-            <div class="glass-panel p-3">
-                <div class="chart-img-card">
-                    <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}" alt="Confusion Matrix" loading="lazy">
-                    <div class="chart-caption">
-                        <strong class="text-white">Confusion Matrix</strong>
-                        <div class="small text-muted mt-1">High true-positive and true-negative diagonal convergence</div>
-                    </div>
-                </div>
+            <div class="glass-panel feature-card glass-panel-hover">
+                <div class="feature-icon-wrapper"><i class="bi bi-funnel"></i></div>
+                <h4 class="feature-title">NLP Stopword &amp; Stemming</h4>
+                <p class="feature-desc">
+                    Removes non-discriminative grammatical tokens and applies NLTK Porter Stemming to standardize lexical roots across articles.
+                </p>
             </div>
         </div>
 
         <div class="col-lg-4 col-md-6">
-            <div class="glass-panel p-3">
-                <div class="chart-img-card">
-                    <img src="{{ url_for('static', filename='images/label_distribution.png') }}" alt="Label Distribution" loading="lazy">
-                    <div class="chart-caption">
-                        <strong class="text-white">Dataset Label Balance</strong>
-                        <div class="small text-muted mt-1">Balanced distribution of Real vs Fake benchmark articles</div>
-                    </div>
-                </div>
+            <div class="glass-panel feature-card glass-panel-hover">
+                <div class="feature-icon-wrapper"><i class="bi bi-globe2"></i></div>
+                <h4 class="feature-title">External Evidence Lookup</h4>
+                <p class="feature-desc">
+                    Searches each extracted claim independently via GDELT DOC 2.0 and free RSS fallbacks, retrieving actual page text before scoring.
+                </p>
             </div>
         </div>
 
         <div class="col-lg-4 col-md-6">
-            <div class="glass-panel p-3">
-                <div class="chart-img-card">
-                    <img src="{{ url_for('static', filename='images/length_distribution.png') }}" alt="Length Distribution" loading="lazy">
-                    <div class="chart-caption">
-                        <strong class="text-white">Article Length Histogram</strong>
-                        <div class="small text-muted mt-1">Word-count variance and feature length distributions</div>
-                    </div>
-                </div>
+            <div class="glass-panel feature-card glass-panel-hover">
+                <div class="feature-icon-wrapper"><i class="bi bi-shield-check"></i></div>
+                <h4 class="feature-title">Transparent Disagreement</h4>
+                <p class="feature-desc">
+                    Keeps ML style scoring and external NLI evidence independent; flags conflicts as MIXED / NEEDS REVIEW rather than guessing truth.
+                </p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- ==========================================================================
-     CALL TO ACTION BANNER
+     MODEL BENCHMARK CHARTS (#metrics)
      ========================================================================== -->
-<section class="container py-5 my-4">
-    <div class="glass-panel p-5 text-center position-relative overflow-hidden" style="background: linear-gradient(145deg, rgba(99,102,241,0.15), rgba(6,182,212,0.1)); border-color: rgba(99,102,241,0.3);">
-        <h2 class="display-6 fw-bold text-white mb-3">Ready to Analyze a News Article?</h2>
-        <p class="text-muted mx-auto mb-4" style="max-width: 540px;">
-            Test any headline, breaking report, or social media leak. Receive an instant forensic verdict with confidence ratings and linguistic feature breakdown.
-        </p>
-        <a href="{{ url_for('dashboard') }}" class="btn-cyber-primary btn-lg px-5">
-            <i class="bi bi-cpu-fill fs-5"></i>
-            <span>Launch Sentinel Console</span>
-        </a>
+<section id="metrics" class="container py-5 reveal-on-scroll">
+    <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 pb-2 border-bottom" style="border-color: var(--border-strong) !important;">
+        <div>
+            <div class="sidebar-kicker">EMPIRICAL EVALUATION</div>
+            <h2 class="display-6 mb-0">Model Training &amp; Benchmarks</h2>
+        </div>
+        <span class="sidebar-kicker">HOLD-OUT VALIDATION</span>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="chart-img-card">
+                <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}" alt="Confusion Matrix" loading="lazy">
+                <div class="chart-caption">
+                    <strong class="text-white">Confusion Matrix</strong>
+                    <div class="small text-muted mt-1">True-positive and true-negative convergence</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="chart-img-card">
+                <img src="{{ url_for('static', filename='images/label_distribution.png') }}" alt="Label Distribution" loading="lazy">
+                <div class="chart-caption">
+                    <strong class="text-white">Dataset Label Balance</strong>
+                    <div class="small text-muted mt-1">Balanced distribution of Real vs Fake articles</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="chart-img-card">
+                <img src="{{ url_for('static', filename='images/length_distribution.png') }}" alt="Length Distribution" loading="lazy">
+                <div class="chart-caption">
+                    <strong class="text-white">Article Length Histogram</strong>
+                    <div class="small text-muted mt-1">Word-count variance across training corpus</div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}

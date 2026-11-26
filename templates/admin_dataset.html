@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Dataset &amp; Model Admin &mdash; VERITAS.AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    {% if not authenticated %}
+    <!-- Admin Login Gate -->
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="glass-panel p-4 p-md-5 text-center">
+                <div class="brand-badge mx-auto mb-3" style="width: 56px; height: 56px; font-size: 24px;">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h3 class="text-white mb-2">Administrative Access Required</h3>
+                <p class="text-muted small mb-4">
+                    Dataset collection, editorial label approval, model retraining, and version rollback are restricted to administrators.
+                </p>
+
+                {% if auth_error %}
+                <div class="alert alert-danger border-0 glass-panel text-crimson small py-2 mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ auth_error }}
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('admin_dataset') }}">
+                    <input type="hidden" name="action" value="login">
+                    <div class="mb-3 text-start">
+                        <label for="adminKeyInput" class="form-label small text-muted fw-bold">Admin Access Key</label>
+                        <input
+                            id="adminKeyInput"
+                            name="admin_key"
+                            type="password"
+                            class="form-control cyber-textarea"
+                            style="min-height: auto; padding: 12px 16px;"
+                            placeholder="Enter VERITAS_ADMIN_KEY..."
+                            required>
+                    </div>
+                    <button type="submit" class="btn-cyber-primary w-100 justify-content-center">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In to Dataset Console
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Authenticated Dataset & Continuous Learning Dashboard -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <span class="badge bg-primary-subtle text-cyan px-3 py-1 rounded-pill small mb-2">CONTINUOUS LEARNING OPS</span>
+            <h2 class="text-white mb-1">Dataset Management &amp; Model Retraining</h2>
+            <p class="text-muted small mb-0">
+                Original dataset is preserved read-only. Only human-approved or validated articles enter training snapshots.
+            </p>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="badge {{ 'bg-success-subtle text-emerald' if scheduler_running else 'bg-secondary-subtle text-muted' }} px-3 py-2 rounded-pill">
+                <i class="bi bi-clock-history me-1"></i>
+                Scheduler: {{ 'Active' if scheduler_running else 'Paused/Disabled' }}
+            </span>
+            <form method="POST" action="{{ url_for('admin_dataset') }}" class="m-0">
+                <input type="hidden" name="action" value="logout">
+                <button type="submit" class="btn-cyber-outline btn-pill-sm">
+                    <i class="bi bi-box-arrow-right"></i> Sign Out
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-3 text-center">
+                <div class="text-muted small">Original Dataset</div>
+                <div id="kpiOriginal" class="fs-4 fw-bold text-white mt-1">{{ stats.original_articles }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-3 text-center">
+                <div class="text-muted small">Newly Collected</div>
+                <div id="kpiCollected" class="fs-4 fw-bold text-cyan mt-1">{{ stats.newly_collected }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-3 text-center">
+                <div class="text-muted small">Approved</div>
+                <div id="kpiApproved" class="fs-4 fw-bold text-emerald mt-1">{{ stats.approved_articles }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-3 text-center">
+                <div class="text-muted small">Needs Review</div>
+                <div id="kpiNeedsReview" class="fs-4 fw-bold text-warning mt-1">{{ stats.needs_review_articles }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-3 text-center">
+                <div class="text-muted small">Pending</div>
+                <div id="kpiPending" class="fs-4 fw-bold text-indigo mt-1">{{ stats.pending_articles }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="glass-panel p-3 text-center">
+                <div class="text-muted small">Rejected</div>
+                <div id="kpiRejected" class="fs-4 fw-bold text-crimson mt-1">{{ stats.rejected_articles }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribution, Last Collection & Admin Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="glass-panel p-4 h-100">
+                <h5 class="text-white mb-3"><i class="bi bi-pie-chart text-cyan me-2"></i>Dataset Distribution &amp; Status</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="telemetry-stat-box">
+                            <div class="text-muted small">REAL Articles</div>
+                            <div id="kpiRealDist" class="fs-5 fw-bold text-emerald mt-1">{{ stats.total_real_distribution }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="telemetry-stat-box">
+                            <div class="text-muted small">FAKE Articles</div>
+                            <div id="kpiFakeDist" class="fs-5 fw-bold text-crimson mt-1">{{ stats.total_fake_distribution }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    <strong>Last Collection:</strong>
+                    <span id="kpiLastCollection">
+                        {% if stats.last_collection %}
+                            {{ stats.last_collection.finished_at or stats.last_collection.started_at }}
+                            ({{ stats.last_collection.status }} &bull; {{ stats.last_collection.new_candidates_count }} new)
+                        {% else %}
+                            Not run yet
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="small text-muted mt-1">
+                    <strong>Untrained Approved Ready:</strong>
+                    <span id="kpiUntrained">{{ stats.untrained_approved }}</span> / {{ min_approved_retrain }} required for automatic retraining
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <h5 class="text-white mb-3"><i class="bi bi-sliders text-cyan me-2"></i>Administrative Controls</h5>
+                    <p class="text-muted small mb-3">
+                        Collect latest external articles for validation or run controlled retraining against the fixed holdout test set.
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button id="btnStartCollection" type="button" class="btn-cyber-primary" onclick="triggerAdminCollection()">
+                        <i class="bi bi-cloud-download"></i> Collect News Now
+                    </button>
+                    <button id="btnTriggerRetrain" type="button" class="btn-cyber-outline" onclick="triggerAdminRetrain()">
+                        <i class="bi bi-arrow-repeat"></i> Retrain Model
+                    </button>
+                </div>
+                <div id="adminActionFeedback" class="small text-cyan mt-3" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Review Queue -->
+    <div class="glass-panel p-4 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h5 class="text-white mb-0"><i class="bi bi-journal-check text-cyan me-2"></i>Candidate Article Review Queue</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="toolbar-btn" onclick="loadAdminCandidates('NEEDS_REVIEW')">Needs Review</button>
+                <button type="button" class="toolbar-btn" onclick="loadAdminCandidates('PENDING')">Pending</button>
+                <button type="button" class="toolbar-btn" onclick="loadAdminCandidates('APPROVED')">Approved</button>
+                <button type="button" class="toolbar-btn" onclick="loadAdminCandidates('REJECTED')">Rejected</button>
+                <button type="button" class="toolbar-btn" onclick="loadAdminCandidates('')">All</button>
+            </div>
+        </div>
+        <div id="adminCandidatesList" class="d-flex flex-column gap-3">
+            <div class="text-muted small">Loading candidate queue...</div>
+        </div>
+    </div>
+
+    <!-- Model Versions & Dataset Versions -->
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="glass-panel p-4 h-100">
+                <h5 class="text-white mb-3"><i class="bi bi-cpu text-cyan me-2"></i>Model Versions &amp; Holdout Evaluation</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0" style="color: var(--text-main);">
+                        <thead>
+                            <tr class="small text-muted">
+                                <th>Version</th>
+                                <th>Dataset</th>
+                                <th>Acc</th>
+                                <th>Prec / Rec / F1</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminModelsTableBody">
+                            {% for mv in stats.model_versions %}
+                            <tr>
+                                <td class="fw-bold">{{ mv.version }}</td>
+                                <td>{{ mv.dataset_version }}</td>
+                                <td>{{ (mv.accuracy * 100)|round(2) }}%</td>
+                                <td class="small font-monospace">{{ (mv.precision_score * 100)|round(1) }} / {{ (mv.recall_score * 100)|round(1) }} / {{ (mv.f1_score * 100)|round(1) }}</td>
+                                <td>
+                                    {% if mv.is_active %}
+                                        <span class="badge bg-success-subtle text-emerald">ACTIVE</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary-subtle text-muted">{{ mv.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not mv.is_active %}
+                                    <button type="button" class="toolbar-btn" onclick="rollbackModel('{{ mv.version }}')">Rollback</button>
+                                    {% else %}
+                                    <span class="small text-muted">Production</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="glass-panel p-4 h-100">
+                <h5 class="text-white mb-3"><i class="bi bi-database text-cyan me-2"></i>Dataset Versions</h5>
+                <div class="d-flex flex-column gap-2" id="adminDatasetVersionsList">
+                    {% for dv in stats.dataset_versions %}
+                    <div class="telemetry-stat-box text-start">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong class="text-cyan">{{ dv.version }}</strong>
+                            <span class="small text-muted">{{ dv.total_count }} total (+{{ dv.approved_added_count }} approved)</span>
+                        </div>
+                        <div class="small text-muted mt-1">Real: {{ dv.real_count }} &bull; Fake: {{ dv.fake_count }}</div>
+                        <div class="small text-muted">{{ dv.notes }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if authenticated %}
+<script>
+function escapeAdminHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function showAdminMsg(msg) {
+    const el = document.getElementById("adminActionFeedback");
+    if (el) {
+        el.textContent = msg;
+        el.style.display = "block";
+    }
+}
+
+async function refreshAdminStats() {
+    const r = await fetch("/api/admin/stats");
+    const d = await r.json();
+    if (!d.success) return;
+    document.getElementById("kpiOriginal").textContent = d.original_articles;
+    document.getElementById("kpiCollected").textContent = d.newly_collected;
+    document.getElementById("kpiApproved").textContent = d.approved_articles;
+    document.getElementById("kpiNeedsReview").textContent = d.needs_review_articles;
+    document.getElementById("kpiPending").textContent = d.pending_articles;
+    document.getElementById("kpiRejected").textContent = d.rejected_articles;
+    document.getElementById("kpiRealDist").textContent = d.total_real_distribution;
+    document.getElementById("kpiFakeDist").textContent = d.total_fake_distribution;
+    document.getElementById("kpiUntrained").textContent = d.untrained_approved;
+}
+
+async function loadAdminCandidates(status = "NEEDS_REVIEW") {
+    const listEl = document.getElementById("adminCandidatesList");
+    if (!listEl) return;
+    listEl.innerHTML = `<div class="text-muted small">Loading candidates...</div>`;
+    const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+    const r = await fetch(`/api/admin/candidates${qs}`);
+    const data = await r.json();
+    if (!data.success) {
+        listEl.innerHTML = `<div class="text-crimson small">${escapeAdminHtml(data.error)}</div>`;
+        return;
+    }
+    if (!data.candidates.length) {
+        listEl.innerHTML = `<div class="text-muted small">No articles found for filter "${escapeAdminHtml(status || "ALL")}".</div>`;
+        return;
+    }
+    listEl.innerHTML = "";
+    data.candidates.forEach(c => {
+        const labelText = c.proposed_label === 1 ? "REAL (1)" : (c.proposed_label === 0 ? "FAKE (0)" : "UNLABELLED");
+        const safeUrl = (c.url || "").startsWith("http") ? c.url : "#";
+        const card = document.createElement("div");
+        card.className = "ext-claim-card";
+        card.innerHTML = `
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <span class="badge bg-dark border border-secondary text-cyan small">#${c.id} &bull; ${escapeAdminHtml(c.publisher || c.domain)}</span>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-secondary-subtle text-muted">${escapeAdminHtml(c.label_source)}</span>
+                    <span class="badge bg-info-subtle text-cyan">${escapeAdminHtml(labelText)}</span>
+                    <span class="badge bg-warning-subtle text-warning">${escapeAdminHtml(c.status)}</span>
+                </div>
+            </div>
+            <h6 class="text-white fw-bold mb-1">${escapeAdminHtml(c.title)}</h6>
+            <p class="text-muted small mb-2">${escapeAdminHtml((c.content || "").slice(0, 260))}...</p>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <a href="${escapeAdminHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="small text-cyan text-decoration-none">
+                    Source URL <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="toolbar-btn text-emerald" onclick="reviewCandidate(${c.id}, 'APPROVED', 1)">Approve REAL</button>
+                    <button type="button" class="toolbar-btn text-crimson" onclick="reviewCandidate(${c.id}, 'APPROVED', 0)">Approve FAKE</button>
+                    <button type="button" class="toolbar-btn" onclick="reviewCandidate(${c.id}, 'REJECTED', null)">Reject</button>
+                </div>
+            </div>
+        `;
+        listEl.appendChild(card);
+    });
+}
+
+async function reviewCandidate(id, status, label) {
+    const r = await fetch(`/api/admin/candidates/${id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, label })
+    });
+    const d = await r.json();
+    if (d.success) {
+        showAdminMsg(`Candidate #${id} marked ${status}.`);
+        await refreshAdminStats();
+        await loadAdminCandidates("");
+    } else {
+        showAdminMsg(`Error: ${d.error}`);
+    }
+}
+
+async function triggerAdminCollection() {
+    const btn = document.getElementById("btnStartCollection");
+    if (btn) btn.disabled = true;
+    showAdminMsg("Running external news collection...");
+    try {
+        const r = await fetch("/api/admin/collect", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        const d = await r.json();
+        showAdminMsg(d.success ? `Collection complete: ${d.new_candidates_count} new, ${d.duplicates_skipped} duplicates skipped.` : (d.error || "Collection failed."));
+        await refreshAdminStats();
+        await loadAdminCandidates("NEEDS_REVIEW");
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function triggerAdminRetrain() {
+    const btn = document.getElementById("btnTriggerRetrain");
+    if (btn) btn.disabled = true;
+    showAdminMsg("Evaluating retraining eligibility...");
+    try {
+        const r = await fetch("/api/admin/retrain", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        const d = await r.json();
+        showAdminMsg(d.message || d.reason || d.error || "Retrain finished.");
+        if (d.success) setTimeout(() => window.location.reload(), 1200);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function rollbackModel(version) {
+    const r = await fetch("/api/admin/rollback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version })
+    });
+    const d = await r.json();
+    showAdminMsg(d.message || d.error || "Rollback processed.");
+    if (d.success) setTimeout(() => window.location.reload(), 1000);
+}
+
+document.addEventListener("DOMContentLoaded", () => loadAdminCandidates("NEEDS_REVIEW"));
+</script>
+{% endif %}
+{% endblock %}

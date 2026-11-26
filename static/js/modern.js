@@ -7,10 +7,43 @@ document.addEventListener("DOMContentLoaded", () => {
     initThemeToggle();
     initParticles();
     initCounters();
+    initScrollReveal();
     initNavbarScroll();
     initTextareaMetrics();
+    initPrefillFromQuery();
     initFormAnalyzer();
 });
+
+function initScrollReveal() {
+    const els = document.querySelectorAll(".reveal-on-scroll");
+    if (!els.length) return;
+    const obs = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    els.forEach(el => obs.observe(el));
+}
+
+function initPrefillFromQuery() {
+    const textarea = document.getElementById("newsTextarea");
+    if (!textarea) return;
+    const params = new URLSearchParams(window.location.search);
+    const prefill = params.get("prefill");
+    const sample = params.get("sample");
+    if (prefill && prefill.trim()) {
+        textarea.value = prefill.trim();
+        textarea.dispatchEvent(new Event("input"));
+        textarea.focus();
+    } else if (sample && SAMPLE_ARTICLES[sample]) {
+        textarea.value = SAMPLE_ARTICLES[sample];
+        textarea.dispatchEvent(new Event("input"));
+        textarea.focus();
+    }
+}
 
 /* --------------------------------------------------------------------------
    0. Theme Toggle (Dark & Light Mode Switching with LocalStorage Persistence)
@@ -31,7 +64,7 @@ function initThemeToggle() {
 }
 
 /* --------------------------------------------------------------------------
-   1. Interactive Ambient Particle Canvas (Connected Cyber Grid)
+   1. Subtle Editorial Background Canvas (Monochrome Ink Dots & Hairlines)
    -------------------------------------------------------------------------- */
 function initParticles() {
     const canvas = document.getElementById("particleCanvas");
@@ -47,22 +80,23 @@ function initParticles() {
     });
 
     const particles = [];
-    const count = Math.min(Math.floor((width * height) / 18000), 45);
+    const count = Math.min(Math.floor((width * height) / 32000), 28);
 
     for (let i = 0; i < count; i++) {
         particles.push({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.45,
-            vy: (Math.random() - 0.5) * 0.45,
-            radius: Math.random() * 1.8 + 0.8,
-            color: Math.random() > 0.5 ? "rgba(99, 102, 241," : "rgba(6, 182, 212,"
+            vx: (Math.random() - 0.5) * 0.25,
+            vy: (Math.random() - 0.5) * 0.25,
+            radius: Math.random() * 1.4 + 0.6
         });
     }
 
-    let animationFrameId;
     function render() {
         ctx.clearRect(0, 0, width, height);
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        const inkRgb = isDark ? "243, 241, 235" : "17, 19, 24";
+        const accentRgb = isDark ? "59, 130, 246" : "29, 78, 216";
 
         for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
@@ -76,7 +110,7 @@ function initParticles() {
 
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color + "0.6)";
+            ctx.fillStyle = i % 3 === 0 ? `rgba(${accentRgb}, 0.28)` : `rgba(${inkRgb}, 0.16)`;
             ctx.fill();
 
             for (let j = i + 1; j < particles.length; j++) {
@@ -85,17 +119,17 @@ function initParticles() {
                 const dy = p.y - p2.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
-                if (dist < 120) {
+                if (dist < 145) {
                     ctx.beginPath();
                     ctx.moveTo(p.x, p.y);
                     ctx.lineTo(p2.x, p2.y);
-                    ctx.strokeStyle = `rgba(99, 102, 241, ${0.15 * (1 - dist / 120)})`;
+                    ctx.strokeStyle = `rgba(${accentRgb}, ${0.11 * (1 - dist / 145)})`;
                     ctx.lineWidth = 0.7;
                     ctx.stroke();
                 }
             }
         }
-        animationFrameId = requestAnimationFrame(render);
+        requestAnimationFrame(render);
     }
 
     render();
@@ -325,22 +359,30 @@ function initFormAnalyzer() {
         if (extSection) extSection.style.display = "none";
         if (scannerHud) scannerHud.style.display = "block";
 
-        const steps = [
-            { text: "[01/05] Ingesting text stream & tokenizing syntax...", pct: 22 },
-            { text: "[02/05] Normalizing text & stripping 179 English stopwords...", pct: 44 },
-            { text: "[03/05] Computing morphological roots with Porter Stemmer...", pct: 66 },
-            { text: "[04/05] Projecting into 5,000-dimensional TF-IDF space...", pct: 86 },
-            { text: "[05/05] Calculating Logistic Regression decision boundary...", pct: 100 }
-        ];
+        const steps = runExternal
+            ? [
+                { text: "01/05 – Processing submitted article...", pct: 33 },
+                { text: "02/05 – Running NLP preprocessing...", pct: 66 },
+                { text: "03/05 – Generating ML prediction...", pct: 100 }
+              ]
+            : [
+                { text: "01/05 – Processing submitted article...", pct: 33 },
+                { text: "02/05 – Running NLP preprocessing...", pct: 66 },
+                { text: "03/05 – Generating ML prediction...", pct: 100 }
+              ];
 
         let currentStep = 0;
+        if (hudStepText) hudStepText.textContent = steps[0].text;
+        if (hudFill) hudFill.style.width = `${steps[0].pct}%`;
+        currentStep = 1;
+
         const stepInterval = setInterval(() => {
             if (currentStep < steps.length) {
                 if (hudStepText) hudStepText.textContent = steps[currentStep].text;
                 if (hudFill) hudFill.style.width = `${steps[currentStep].pct}%`;
                 currentStep++;
             }
-        }, 160);
+        }, 90);
 
         try {
             const endpoint = runExternal ? "/api/verify" : "/api/predict";
@@ -352,7 +394,7 @@ function initFormAnalyzer() {
 
             const data = await response.json();
 
-            await new Promise(r => setTimeout(r, 850));
+            await new Promise(r => setTimeout(r, 280));
             clearInterval(stepInterval);
 
             if (!data.success) {
@@ -368,7 +410,7 @@ function initFormAnalyzer() {
                 extSection.style.display = "block";
                 if (extProgress) extProgress.style.display = "block";
                 if (extResults) extResults.style.display = "none";
-                updateExternalProgress(10, "Extracting factual claims and searching GDELT...");
+                updateExternalProgress(60, "04/05 – Extracting claims and searching external sources...");
                 pollVerificationStatus(data.job_id);
             }
         } catch (error) {
@@ -497,37 +539,75 @@ function renderExternalVerification(payload) {
                 else if (c.label === "CONTRADICTED") badgeCls = "bg-danger-subtle text-crimson";
                 else if (c.label === "MIXED") badgeCls = "bg-warning-subtle text-warning";
 
-                const suppHtml = (c.supporting_evidence || []).map(ev => `
-                    <div class="ext-evidence-item ev-supporting mt-2">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="text-emerald small"><i class="bi bi-check-circle me-1"></i>Supporting &bull; ${escapeHtml(ev.publisher)}</strong>
-                            <span class="small text-muted font-monospace">NLI Entailment: ${(ev.entailment_score * 100).toFixed(0)}%</span>
-                        </div>
-                        <div class="text-muted">"${escapeHtml(ev.evidence_passage)}"</div>
-                    </div>
-                `).join("");
+                const renderClaimEvidenceItem = (ev, kind) => {
+                    const safeUrl = safeHttpUrl(ev.url);
+                    const pubDate = ev.published_date ? escapeHtml(ev.published_date) : "Date unavailable";
+                    let borderCls = "";
+                    let labelHtml = "";
+                    let scoreHtml = "";
+                    let bodyHtml = "";
 
-                const contraHtml = (c.contradicting_evidence || []).map(ev => `
-                    <div class="ext-evidence-item ev-contradicting mt-2">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <strong class="text-crimson small"><i class="bi bi-x-circle me-1"></i>Contradicting &bull; ${escapeHtml(ev.publisher)}</strong>
-                            <span class="small text-muted font-monospace">NLI Contradiction: ${(ev.contradiction_score * 100).toFixed(0)}%</span>
+                    if (kind === "supporting") {
+                        borderCls = "ev-supporting";
+                        labelHtml = `<strong class="text-emerald small"><i class="bi bi-check-circle me-1"></i>SUPPORTING &bull; ${escapeHtml(ev.publisher)} (${escapeHtml(ev.domain)})</strong>`;
+                        scoreHtml = `<span class="small text-muted font-monospace">NLI Entailment: ${(ev.entailment_score * 100).toFixed(0)}%</span>`;
+                        bodyHtml = `<div class="text-muted mt-1">"${escapeHtml(ev.evidence_passage)}"</div>`;
+                    } else if (kind === "contradicting") {
+                        borderCls = "ev-contradicting";
+                        labelHtml = `<strong class="text-crimson small"><i class="bi bi-x-circle me-1"></i>CONTRADICTING &bull; ${escapeHtml(ev.publisher)} (${escapeHtml(ev.domain)})</strong>`;
+                        scoreHtml = `<span class="small text-muted font-monospace">NLI Contradiction: ${(ev.contradiction_score * 100).toFixed(0)}%</span>`;
+                        bodyHtml = `<div class="text-muted mt-1">"${escapeHtml(ev.evidence_passage)}"</div>`;
+                    } else if (kind === "neutral") {
+                        borderCls = "ev-neutral";
+                        labelHtml = `<strong class="text-muted small"><i class="bi bi-dash-circle me-1"></i>INCONCLUSIVE / NEUTRAL &bull; ${escapeHtml(ev.publisher)} (${escapeHtml(ev.domain)})</strong>`;
+                        scoreHtml = `<span class="small text-muted font-monospace">NLI Neutral: ${(ev.neutral_score * 100).toFixed(0)}%</span>`;
+                        bodyHtml = `<div class="text-muted mt-1">"${escapeHtml(ev.evidence_passage)}"</div>`;
+                    } else {
+                        borderCls = "ev-unretrieved";
+                        labelHtml = `<strong class="text-warning small"><i class="bi bi-lock me-1"></i>CONTENT NOT RETRIEVED &bull; ${escapeHtml(ev.publisher)} (${escapeHtml(ev.domain)})</strong>`;
+                        scoreHtml = `<span class="small text-warning font-monospace">${escapeHtml(ev.status_note || "Inaccessible")}</span>`;
+                        bodyHtml = `<div class="text-muted small fst-italic mt-1">Article content could not be retrieved, so it was not used as verification proof.</div>`;
+                    }
+
+                    return `
+                        <div class="ext-evidence-item ${borderCls} mt-2">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1">
+                                ${labelHtml}
+                                ${scoreHtml}
+                            </div>
+                            <div class="small fw-semibold text-white">${escapeHtml(ev.title)}</div>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-1">
+                                <span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>${pubDate}</span>
+                                <a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="small text-cyan text-decoration-none">
+                                    Open Original Article <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            </div>
+                            ${bodyHtml}
                         </div>
-                        <div class="text-muted">"${escapeHtml(ev.evidence_passage)}"</div>
-                    </div>
-                `).join("");
+                    `;
+                };
+
+                const suppHtml = (c.supporting_evidence || []).map(ev => renderClaimEvidenceItem(ev, "supporting")).join("");
+                const contraHtml = (c.contradicting_evidence || []).map(ev => renderClaimEvidenceItem(ev, "contradicting")).join("");
+                const neutHtml = (c.neutral_evidence || []).map(ev => renderClaimEvidenceItem(ev, "neutral")).join("");
+                const unretHtml = (c.unretrieved_sources || []).map(ev => renderClaimEvidenceItem(ev, "unretrieved")).join("");
 
                 const card = document.createElement("div");
                 card.className = "ext-claim-card";
                 card.innerHTML = `
                     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
-                        <span class="badge bg-dark border border-secondary text-cyan small">CLAIM ${escapeHtml(c.claim_id)}</span>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="badge bg-dark border border-secondary text-cyan small">CLAIM ${escapeHtml(c.claim_id)}</span>
+                            <span class="small text-muted font-monospace">Query: "${escapeHtml(c.search_query)}"</span>
+                        </div>
                         <span class="badge ${badgeCls} rounded-pill px-3 py-1">${escapeHtml(c.label)}</span>
                     </div>
                     <p class="text-white fw-semibold mb-1" style="font-size: 14.5px;">"${escapeHtml(c.claim_text)}"</p>
                     <p class="text-muted small mb-2">${escapeHtml(c.rationale)}</p>
                     ${suppHtml}
                     ${contraHtml}
+                    ${neutHtml}
+                    ${unretHtml}
                 `;
                 claimsList.appendChild(card);
             });
@@ -548,11 +628,19 @@ function renderExternalVerification(payload) {
                 let stanceBadge = `<span class="badge bg-secondary-subtle text-muted">NEUTRAL</span>`;
                 if (src.stance === "SUPPORTING") stanceBadge = `<span class="badge bg-success-subtle text-emerald">SUPPORTING</span>`;
                 else if (src.stance === "CONTRADICTING") stanceBadge = `<span class="badge bg-danger-subtle text-crimson">CONTRADICTING</span>`;
+                else if (src.stance === "UNRETRIEVED" || !src.accessible) stanceBadge = `<span class="badge bg-warning-subtle text-warning">UNRETRIEVED</span>`;
 
                 const safeUrl = safeHttpUrl(src.url);
                 const dateHtml = src.published_date
                     ? `<span class="small text-muted"><i class="bi bi-calendar3 me-1"></i>${escapeHtml(src.published_date)}</span>`
                     : `<span class="small text-muted">Date unavailable</span>`;
+                const claimTags = (src.claim_ids || []).map(id => `Claim ${escapeHtml(id)}`).join(", ");
+                const passageHtml = src.accessible && src.evidence_passage
+                    ? `"${escapeHtml(src.evidence_passage)}"`
+                    : `<span class="fst-italic">Content could not be retrieved (${escapeHtml(src.status_note || "Inaccessible")}). Not used as verification proof.</span>`;
+                const alignHtml = src.accessible
+                    ? `Align: ${(src.entailment_score * 100).toFixed(0)}% Sup / ${(src.contradiction_score * 100).toFixed(0)}% Con`
+                    : `Content unavailable`;
 
                 const col = document.createElement("div");
                 col.className = "col-md-6";
@@ -566,14 +654,14 @@ function renderExternalVerification(payload) {
                             <h6 class="text-white fw-bold mb-2" style="font-size: 14.5px; line-height: 1.4;">${escapeHtml(src.title)}</h6>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 ${dateHtml}
-                                <span class="small text-muted font-monospace">${src.accessible ? "Full text extracted" : escapeHtml(src.status_note || "Snippet only")}</span>
+                                <span class="small text-muted font-monospace">${claimTags ? `${claimTags} &bull; ` : ""}${src.accessible ? "Full text extracted" : escapeHtml(src.status_note || "Inaccessible")}</span>
                             </div>
                             <div class="ext-source-passage mb-3">
-                                "${escapeHtml(src.evidence_passage)}"
+                                ${passageHtml}
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary-subtle">
-                            <span class="small text-muted font-monospace">Align: ${(src.entailment_score * 100).toFixed(0)}% Sup / ${(src.contradiction_score * 100).toFixed(0)}% Con</span>
+                            <span class="small text-muted font-monospace">${alignHtml}</span>
                             <a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="btn-cyber-outline btn-pill-sm">
                                 <span>Open Source</span> <i class="bi bi-box-arrow-up-right"></i>
                             </a>

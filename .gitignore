@@ -16,5 +16,7 @@ models/*.joblib
 # System Files
 .DS_Store
 
-# Local Backups
+# Local Backups & Continuous Learning Runtime Data
 backups/
+data_pipeline/
+models/versions/
